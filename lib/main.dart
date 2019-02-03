@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_admob/firebase_admob.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:wordie_app/grid.dart';
 import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/services/word_service.dart';
@@ -60,6 +61,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   BannerAd _bannerAd;
+  double bottomPadding = 0.0;
 
   @override
   void initState() {
@@ -76,6 +78,9 @@ class _MyHomePageState extends State<MyHomePage> {
       targetingInfo: targetingInfo,
       listener: (MobileAdEvent event) {
         print("BannerAd event is $event");
+        this.setState(() {
+          this.bottomPadding = 51.0;
+        });
       },
     )..load()..show();
   }
@@ -96,6 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
           builder: (context, AsyncSnapshot<Word> snapshot) {
             if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
               return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Container(
                     height: 100.0,
@@ -105,11 +111,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     grid: this.buildGridForWord(context, snapshot.data),
                     onWordFound: this.foundWord
                   ),
-                  Text(snapshot.data.description),
-                  RaisedButton(
-                    onPressed: () {
-                      this.setState(() {});
-                    },
+                  Expanded(
+                    child: Center(
+                      child: AutoSizeText(
+                        snapshot.data.description,
+                        style: TextStyle(
+                          
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                      )
+                    ),
                   )
                 ]
               );
@@ -119,6 +131,21 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         )
       ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(bottom: this.bottomPadding),
+        child: BottomNavigationBar(
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Text("Test"),
+              title: Text("Test")
+            ),
+            BottomNavigationBarItem(
+              icon: Text("Test"),
+              title: Text("Test")
+            )
+          ],
+        )
+      )
     );
   }
 

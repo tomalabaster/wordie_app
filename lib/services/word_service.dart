@@ -23,13 +23,15 @@ class WordService {
       words = words.where((word) => word.length == length).toList();
     }
 
-    var word;
-    var description;
+    String word;
+    String description;
 
     while (description == null) {
       word = words[Random().nextInt(words.length)];
       description = await this._getDescriptionForWord(word);
     }
+
+    description = description[0].toUpperCase() + description.substring(1) + '.';
 
     return new Word(word, description);
   }
@@ -44,6 +46,10 @@ class WordService {
     );
 
     if (descriptionResponse.body != null) {
+      if (descriptionResponse.statusCode == 404) {
+        return null;
+      }
+      
       var json = jsonDecode(descriptionResponse.body) as Map<String, dynamic>;
 
       if (json.containsKey("results")) {
