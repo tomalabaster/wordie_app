@@ -1,10 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_admob/firebase_admob.dart';
-import 'package:wordie_app/character.dart';
+import 'package:wordie_app/grid.dart';
 import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/services/word_service.dart';
 
@@ -94,33 +94,16 @@ class _MyHomePageState extends State<MyHomePage> {
         child: FutureBuilder(
           future: this.widget.wordService.getNewWord(),
           builder: (context, AsyncSnapshot<Word> snapshot) {
-            if (snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
               return Column(
                 children: <Widget>[
-                  GestureDetector(
-                    child: Column(
-                      key: GlobalObjectKey("grid"),
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: this.buildGridForWord(context, snapshot.data)
-                    ),
-                    onPanStart: (details) {
-                      print(details.globalPosition);
-                    },
-                    onPanUpdate: (details) {
-                      //print(details.globalPosition);
-                      var rect = GlobalObjectKey("grid").currentContext.findRenderObject() as RenderBox;
-                      var result = HitTestResult();
-                      if (rect.hitTest(result, position: details.globalPosition)) {
-                        // print(rect.localToGlobal(Offset(0, 0)));
-                        var row = (details.globalPosition.dx / (rect.semanticBounds.width / 8.0)).floor();
-                        var column = (details.globalPosition.dy / (rect.semanticBounds.height / 8.0)).floor();
-                        var itemNumber = ((column * 8) + 1) + row;
-                        // print(itemNumber);
-                        var currentWidget = GlobalObjectKey("$itemNumber").currentWidget as Text;
-                        //print(currentWidget);
-                      }
-                    },
+                  Container(
+                    height: 100.0,
+                  ),
+                  Grid(
+                    word: snapshot.data,
+                    grid: this.buildGridForWord(context, snapshot.data),
+                    onWordFound: this.foundWord
                   ),
                   Text(snapshot.data.description),
                   RaisedButton(
@@ -139,7 +122,27 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  List<Widget> buildGridForWord(BuildContext context, Word word) {
+  void foundWord() async {
+    print("Found!");
+
+    await time(1);
+
+    this.setState(() {});
+  }
+
+  static Future time(int time) async {
+    Completer c = new Completer();
+
+    new Timer(new Duration(seconds: time), () {
+      c.complete('done with time out');
+    });
+
+    return c.future;
+  }
+
+  List buildGridForWord(BuildContext context, Word word) {
+    var grid = [];
+
     var directions = [
       "rtlrtl",
       "rtlttb",
@@ -152,8 +155,6 @@ class _MyHomePageState extends State<MyHomePage> {
     ];
 
     var alphabet = "abcdefghijklmnopqrstuvwxyz";
-
-    var grid = [];
 
     var random = Random();
 
@@ -186,43 +187,15 @@ class _MyHomePageState extends State<MyHomePage> {
       startingRow = 7 - startingRow;
     }
 
-    print("$startingRow, $startingColumn");
-
     grid[startingRow][startingColumn] = word.word[0];
 
     for (var i=1; i<word.word.length; i++) {
       startingRow = this.getNextRowForWord(startingRow, direction);
       startingColumn = this.getNextColumnForWord(startingColumn, direction);
-      // print("$startingRow, $startingColumn");
       grid[startingRow][startingColumn] = word.word[i];
     }
 
-    for (var i=0; i<grid.length; i++) {
-      // print(grid[i]);
-    }
-
-    var rows = <Widget>[];
-
-    var size = MediaQuery.of(context).size;
-
-    var sizePerCell = size.width > size.height ? size.height / 8 : size.width / 8;
-
-    for (var i=0; i<grid.length; i++) {
-      var row = grid[i];
-      var children = <Widget>[];
-      for (var j=0; j<row.length; j++) {
-        children.add(
-          Character(
-            key: GlobalObjectKey("${((i * 8) + 1) + j}"),
-            widthHeight: sizePerCell,
-            character: row[j],
-          )
-        );
-      }
-      rows.add(Row(children: children,));
-    }
-
-    return rows; 
+    return grid;
   }
 
   int getNextColumnForWord(int currentColumn, String direction) {

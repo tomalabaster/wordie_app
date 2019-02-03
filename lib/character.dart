@@ -4,11 +4,15 @@ class Character extends StatefulWidget {
 
   final double widthHeight;
   final String character;
+  final bool selected;
+  final bool correct;
 
   const Character({
     Key key,
     this.widthHeight,
-    this.character
+    this.character,
+    this.selected,
+    this.correct
   });
 
   @override
@@ -27,7 +31,7 @@ class _CharacterState extends State<Character> {
           this.widget.character.toUpperCase(),
           key: this.widget.key,
           style: TextStyle(
-            color: Colors.white,
+            color: this.widget.correct ? Colors.green : this.widget.selected ? Colors.orange : Colors.white,
             fontSize: 24.0,
             fontWeight: FontWeight.bold
           )
