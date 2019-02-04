@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:wordie_app/game_fragment.dart';
 import 'package:wordie_app/grid.dart';
 import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/services/word_service.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -61,13 +63,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   BannerAd _bannerAd;
+  MobileAdTargetingInfo _targetingInfo;
   double bottomPadding = 0.0;
+  GameFragment gameFragment;
+  bool showSkipModal = false;
+  bool skipAllowed = false;
 
   @override
   void initState() {
     super.initState();
 
-    MobileAdTargetingInfo targetingInfo = MobileAdTargetingInfo(
+    this._targetingInfo = MobileAdTargetingInfo(
       nonPersonalizedAds: true,
       testDevices: <String>[], // Android emulators are considered test devices
     );
@@ -75,14 +81,30 @@ class _MyHomePageState extends State<MyHomePage> {
     this._bannerAd = BannerAd(
       adUnitId: BannerAd.testAdUnitId,
       size: AdSize.smartBanner,
-      targetingInfo: targetingInfo,
+      targetingInfo: this._targetingInfo,
       listener: (MobileAdEvent event) {
         print("BannerAd event is $event");
         this.setState(() {
-          this.bottomPadding = 51.0;
+          this.bottomPadding = 50.0;
         });
       },
     )..load()..show();
+
+    RewardedVideoAd.instance.listener = (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) {
+      print("RewardedVideoAd event $event");
+      if (event == RewardedVideoAdEvent.rewarded) {
+        this.setState(() {
+          this.skipAllowed = rewardAmount == 1;
+        });
+      } else if (event == RewardedVideoAdEvent.loaded) {
+        RewardedVideoAd.instance.show();
+      } else if (event == RewardedVideoAdEvent.closed) {
+        this.setState(() {
+          this.showSkipModal = false;
+          this.gameFragment = null;
+        });
+      }
+    };
   }
 
   @override
@@ -93,181 +115,206 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: GlobalObjectKey("scaffold"),
-      body: Center(
-        child: FutureBuilder(
-          future: this.widget.wordService.getNewWord(),
-          builder: (context, AsyncSnapshot<Word> snapshot) {
-            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Container(
-                    height: 100.0,
+    if (this.gameFragment == null) {
+      this.gameFragment = GameFragment(
+        wordService: this.widget.wordService,
+      );
+    }
+
+    return Stack(
+      children: [
+        Scaffold(
+          appBar: AppBar(
+            backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
+            elevation: 0.0,
+            title: Text(
+              "Wordie",
+              style: TextStyle(
+                fontFamily: 'Subscribe',
+                fontSize: 40.0
+              ),
+            ),
+            leading: Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.orangeAccent
                   ),
-                  Grid(
-                    word: snapshot.data,
-                    grid: this.buildGridForWord(context, snapshot.data),
-                    onWordFound: this.foundWord
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: AutoSizeText(
-                        snapshot.data.description,
-                        style: TextStyle(
-                          
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 3,
-                      )
+                  borderRadius: BorderRadius.circular(8.0)
+                ),
+                child: Padding(
+                  padding: EdgeInsets.only(left: 8.0, right: 8.0),
+                  child: Text(
+                    "74",
+                    style: TextStyle(
+                      color: Colors.orangeAccent,
+                      fontFamily: 'Subscribe',
+                      fontSize: 24.0,
+                      height: 1.1
                     ),
                   )
-                ]
-              );
-            }
-
-            return CircularProgressIndicator();
-          }
-        )
-      ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(bottom: this.bottomPadding),
-        child: BottomNavigationBar(
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Text("Test"),
-              title: Text("Test")
+                )
+              )
             ),
-            BottomNavigationBarItem(
-              icon: Text("Test"),
-              title: Text("Test")
+            actions: <Widget>[
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: GestureDetector(
+                    child: Text(
+                      "Skip",
+                      style: TextStyle(
+                        fontFamily: 'Subscribe',
+                        fontSize: 24.0
+                      ),
+                    ),
+                    onTap: () {
+                      this.setState(() {
+                        this.showSkipModal = true;
+                      });
+                    },
+                  ),
+                )
+              )
+            ],
+          ),
+          backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
+          body: Padding(
+            padding: EdgeInsets.only(bottom: this.bottomPadding),
+            child: this.gameFragment,
+          )
+        ),
+        this.showSkipModal ? Opacity(
+          opacity: 1.0,
+          child: Material(
+            color: Colors.black.withAlpha(196),
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.only(left: 32.0, right: 32.0),
+                child: Container(
+                  height: 360.0,
+                  child: Stack(
+                    children: [
+                      Align(
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
+                          child: Container(
+                            height: 360.0,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                width: 4.0
+                              ),
+                              borderRadius: BorderRadius.circular(8.0)
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "You've used your free skip for today.\n\nWatch an ad or go pro?",
+                                  style: TextStyle(
+                                    fontFamily: 'Subscribe',
+                                    fontSize: 24.0
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(top: 32.0),
+                                  child: GestureDetector(
+                                    child: Container(
+                                      width: 128.0,
+                                      height: 48.0,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        color: Color.fromRGBO(32, 162, 226, 1.0)
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          "Ad",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: 'Subscribe',
+                                            fontSize: 28.0
+                                          )
+                                        )
+                                      )
+                                    ),
+                                    onTap: () async {
+                                      await RewardedVideoAd.instance.load(
+                                        adUnitId: RewardedVideoAd.testAdUnitId,
+                                        targetingInfo: this._targetingInfo);
+                                    },
+                                  )
+                                ),
+                                // Padding(
+                                //   padding: EdgeInsets.only(top: 16.0),
+                                //   child: GestureDetector(
+                                //     child: Container(
+                                //       width: 128.0,
+                                //       height: 48.0,
+                                //       decoration: BoxDecoration(
+                                //         borderRadius: BorderRadius.circular(8.0),
+                                //         color: Colors.green
+                                //       ),
+                                //       child: Center(
+                                //         child: Text(
+                                //           "Go pro!",
+                                //           style: TextStyle(
+                                //             color: Colors.white,
+                                //             fontFamily: 'Subscribe',
+                                //             fontSize: 28.0
+                                //           )
+                                //         )
+                                //       )
+                                //     ),
+                                //   )
+                                // )
+                              ]
+                            ),
+                            padding: EdgeInsets.all(16.0),
+                          ),
+                        )
+                      ),
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: GestureDetector(
+                          child: Container(
+                            width: 32.0,
+                            height: 32.0,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                width: 4.0
+                              ),
+                              borderRadius: BorderRadius.circular(32.0),
+                              color: Colors.white
+                            ),
+                            child: Center(
+                              child: Text(
+                                "X",
+                                style: TextStyle(
+                                  fontFamily: "Subscribe",
+                                  fontSize: 24.0,
+                                  height: 1.1
+                                ),
+                              )
+                            ),
+                          ),
+                          onTap: () {
+                            this.setState(() {
+                              this.showSkipModal = false;
+                            });
+                          },
+                        ),
+                      ),
+                    ]
+                  )
+                )
+              ),
             )
-          ],
-        )
-      )
+          )
+        ) : Container()
+      ]
     );
-  }
-
-  void foundWord() async {
-    print("Found!");
-
-    await time(1);
-
-    this.setState(() {});
-  }
-
-  static Future time(int time) async {
-    Completer c = new Completer();
-
-    new Timer(new Duration(seconds: time), () {
-      c.complete('done with time out');
-    });
-
-    return c.future;
-  }
-
-  List buildGridForWord(BuildContext context, Word word) {
-    var grid = [];
-
-    var directions = [
-      "rtlrtl",
-      "rtlttb",
-      "rtlbtt",
-      "ltrltr",
-      "ltrttb",
-      "ltrbtt",
-      "ttbttb",
-      "bttbtt"
-    ];
-
-    var alphabet = "abcdefghijklmnopqrstuvwxyz";
-
-    var random = Random();
-
-    for (var i=0; i<8; i++) {
-      var row = [];
-      for (var j=0; j<8; j++) {
-        row.add(alphabet[random.nextInt(8)]);
-      }
-      grid.add(row);
-    }
-
-    print(word.word);
-
-    var startingRow = random.nextInt(8 - word.word.length);
-    var startingColumn = random.nextInt(8 - word.word.length);
-
-    grid[startingRow][startingColumn] = word.word[0];
-
-    var direction = directions[random.nextInt(directions.length)];
-
-    if (direction.startsWith("l")) {
-      startingColumn = 7 - startingColumn;
-    }
-
-    if (direction.startsWith("b")) {
-      startingRow = 7 - startingRow;
-    }
-
-    if (direction[3] == "b" && direction != "bttbtt") {
-      startingRow = 7 - startingRow;
-    }
-
-    grid[startingRow][startingColumn] = word.word[0];
-
-    for (var i=1; i<word.word.length; i++) {
-      startingRow = this.getNextRowForWord(startingRow, direction);
-      startingColumn = this.getNextColumnForWord(startingColumn, direction);
-      grid[startingRow][startingColumn] = word.word[i];
-    }
-
-    return grid;
-  }
-
-  int getNextColumnForWord(int currentColumn, String direction) {
-    switch (direction) {
-      case "rtlrtl":
-        return currentColumn += 1;
-      case "rtlttb":
-        return currentColumn += 1;
-      case "rtlbtt":
-        return currentColumn += 1;
-      case "ltrltr":
-        return currentColumn -= 1;
-      case "ltrttb":
-        return currentColumn -= 1;
-      case "ltrbtt":
-        return currentColumn -= 1;
-      case "ttbttb":
-        return currentColumn;
-      case "bttbtt":
-        return currentColumn;
-      default:
-        return currentColumn;
-    }
-  }
-
-  int getNextRowForWord(int currentRow, String direction) {
-    switch (direction) {
-      case "rtlrtl":
-        return currentRow;
-      case "rtlttb":
-        return currentRow += 1;
-      case "rtlbtt":
-        return currentRow -= 1;
-      case "ltrltr":
-        return currentRow;
-      case "ltrttb":
-        return currentRow += 1;
-      case "ltrbtt":
-        return currentRow -= 1;
-      case "ttbttb":
-        return currentRow += 1;
-      case "bttbtt":
-        return currentRow -= 1;
-      default:
-        return currentRow;
-    }
   }
 }

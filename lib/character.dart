@@ -23,7 +23,10 @@ class _CharacterState extends State<Character> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.lightBlue,
+      decoration: BoxDecoration(
+        color: Color.fromRGBO(32, 162, 226, 1.0),
+        border: Border.all(style: BorderStyle.none, width: 0.0)
+      ),
       width: this.widget.widthHeight,
       height: this.widget.widthHeight,
       child: Center(
@@ -32,8 +35,9 @@ class _CharacterState extends State<Character> {
           key: this.widget.key,
           style: TextStyle(
             color: this.widget.correct ? Colors.green : this.widget.selected ? Colors.orange : Colors.white,
-            fontSize: 24.0,
-            fontWeight: FontWeight.bold
+            fontFamily: 'Subscribe',
+            fontSize: 32.0,
+            fontWeight: FontWeight.normal
           )
         )
       )

@@ -31,11 +31,14 @@ class _GridState extends State<Grid> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      child: Column(
-        key: GlobalObjectKey("grid"),
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: this.buildGridForWord(context, this.widget.word)
+      child: Container(
+        color: Color.fromRGBO(32, 162, 226, 1.0),
+        child: Column(
+          key: GlobalObjectKey("grid"),
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: this.buildGridForWord(context, this.widget.word)
+        )
       ),
       onPanStart: (details) {
         this.start = details.globalPosition;

@@ -31,7 +31,7 @@ class WordService {
       description = await this._getDescriptionForWord(word);
     }
 
-    description = description[0].toUpperCase() + description.substring(1) + '.';
+    description = description[0].toUpperCase() + description.substring(1) + (description[description.length -1] == '.' ? '' : '.');
 
     return new Word(word, description);
   }
