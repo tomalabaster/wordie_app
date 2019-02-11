@@ -11,6 +11,7 @@ import 'package:wordie_app/database_query_strings.dart';
 import 'package:wordie_app/game_fragment.dart';
 import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/services/app_flow_service.dart';
+import 'package:wordie_app/services/game_state_service.dart';
 import 'package:wordie_app/services/word_service.dart';
 
 void main() async {
@@ -19,10 +20,11 @@ void main() async {
   var path = join(databasesPath, 'intellihome.db');
   var database = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (Database db, int version) async {
         await db.execute(DatabaseQueryStrings.createUsersTable);
         await db.execute(DatabaseQueryStrings.seedUsersTable);
+        await db.execute(DatabaseQueryStrings.createWordsCompletedTable);
     });
 
   var appId = Platform.isIOS ? "ca-app-pub-8187198937216043~3354678461" : Platform.isAndroid ? "ca-app-pub-8187198937216043~2308942688" : "";
@@ -31,12 +33,14 @@ void main() async {
 
   var analytics = FirebaseAnalytics();
   var appFlowService = AppFlowService(database);
+  var gameStateService = GameStateService(database);
   var wordService = WordService();
 
   runApp(
     MyApp(
       analytics: analytics,
       appFlowService: appFlowService,
+      gameStateService: gameStateService,
       wordService: wordService,
     )
   );
@@ -46,12 +50,14 @@ class MyApp extends StatelessWidget {
 
   final FirebaseAnalytics analytics;
   final AppFlowService appFlowService;
+  final GameStateService gameStateService;
   final WordService wordService;
 
   const MyApp({
     Key key,
     this.analytics,
     this.appFlowService,
+    this.gameStateService,
     this.wordService
   }) : super(key: key);
 
@@ -63,7 +69,12 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(analytics: this.analytics, appFlowService: this.appFlowService, wordService: this.wordService),
+      home: MyHomePage(
+        analytics: this.analytics,
+        appFlowService: this.appFlowService,
+        gameStateService: this.gameStateService,
+        wordService: this.wordService
+      ),
     );
   }
 }
@@ -74,11 +85,13 @@ class MyHomePage extends StatefulWidget {
     Key key,
     this.analytics,
     this.appFlowService,
+    this.gameStateService,
     this.wordService
   }) : super(key: key);
 
   final FirebaseAnalytics analytics;
   final AppFlowService appFlowService;
+  final GameStateService gameStateService;
   final WordService wordService;
 
   @override
@@ -159,6 +172,8 @@ class _MyHomePageState extends State<MyHomePage> {
         future: this.widget.wordService.getNewWord(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+            this.word = snapshot.data;
+            
             return GameFragment(
               word: snapshot.data,
               onWordFound: () => this.onWordFound(),
@@ -197,14 +212,31 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 child: Padding(
                   padding: EdgeInsets.only(left: 8.0, right: 8.0),
-                  child: Text(
-                    "74",
-                    style: TextStyle(
-                      color: Colors.orangeAccent,
-                      fontFamily: 'Subscribe',
-                      fontSize: 24.0,
-                      height: 1.1
-                    ),
+                  child: FutureBuilder(
+                    future: this.widget.gameStateService.getWordsCompletedCount(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                        return Text(
+                          "${snapshot.data}",
+                          style: TextStyle(
+                            color: Colors.orangeAccent,
+                            fontFamily: 'Subscribe',
+                            fontSize: 24.0,
+                            height: 1.1
+                          ),
+                        );
+                      }
+
+                      return Text(
+                        "",
+                        style: TextStyle(
+                          color: Colors.orangeAccent,
+                          fontFamily: 'Subscribe',
+                          fontSize: 24.0,
+                          height: 1.1
+                        ),
+                      );
+                    }
                   )
                 )
               )
@@ -397,7 +429,8 @@ class _MyHomePageState extends State<MyHomePage> {
     )..load();
   }
 
-  void onWordFound() {
+  void onWordFound() async {
+    await this.widget.gameStateService.setWordCompleted(this.word);
     this.skip();
   }
 
