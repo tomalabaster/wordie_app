@@ -63,11 +63,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
 
   BannerAd _bannerAd;
+  InterstitialAd _interstitialAd;
   MobileAdTargetingInfo _targetingInfo;
   double bottomPadding = 0.0;
   GameFragment gameFragment;
   bool showSkipModal = false;
   bool skipAllowed = false;
+  bool showingInterstitialAd = false;
 
   @override
   void initState() {
@@ -90,7 +92,9 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     )..load()..show();
 
-    RewardedVideoAd.instance.listener = (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) {
+    this.setupInterstitialAd();
+
+    RewardedVideoAd.instance.listener = (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) async {
       print("RewardedVideoAd event $event");
       if (event == RewardedVideoAdEvent.rewarded) {
         this.setState(() {
@@ -99,10 +103,18 @@ class _MyHomePageState extends State<MyHomePage> {
       } else if (event == RewardedVideoAdEvent.loaded) {
         RewardedVideoAd.instance.show();
       } else if (event == RewardedVideoAdEvent.closed) {
-        this.setState(() {
-          this.showSkipModal = false;
-          this.gameFragment = null;
-        });
+        if (await this._interstitialAd.isLoaded()) {
+          this.setState(() {
+            this.showingInterstitialAd = true;
+          });
+
+          this._interstitialAd.show();
+        } else {
+          this.setState(() {
+            this.showSkipModal = false;
+            this.gameFragment = null;
+          });
+        }
       }
     };
   }
@@ -313,8 +325,31 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             )
           )
+        ) : Container(),
+        this.showingInterstitialAd ? Container(
+          color: Colors.black,
         ) : Container()
       ]
     );
+  }
+
+  void setupInterstitialAd() {
+    this._interstitialAd = InterstitialAd(
+      adUnitId: InterstitialAd.testAdUnitId,
+      targetingInfo: this._targetingInfo,
+      listener: (event) {
+        print("Interstitial ad event: $event");
+
+        if (event == MobileAdEvent.closed) {
+          this.setState(() {
+            this.showingInterstitialAd = false;
+            this.showSkipModal = false;
+            this.gameFragment = null;
+          });
+
+          this.setupInterstitialAd();
+        }
+      }
+    )..load();
   }
 }
