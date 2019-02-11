@@ -3,23 +3,40 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_admob/firebase_admob.dart';
-import 'package:auto_size_text/auto_size_text.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:wordie_app/database_query_strings.dart';
 import 'package:wordie_app/game_fragment.dart';
-import 'package:wordie_app/grid.dart';
 import 'package:wordie_app/models/word.dart';
+import 'package:wordie_app/services/app_flow_service.dart';
 import 'package:wordie_app/services/word_service.dart';
 
-void main() {
+void main() async {
+
+  var databasesPath = await getDatabasesPath();
+  var path = join(databasesPath, 'intellihome.db');
+  var database = await openDatabase(
+      path,
+      version: 1,
+      onCreate: (Database db, int version) async {
+        await db.execute(DatabaseQueryStrings.createUsersTable);
+        await db.execute(DatabaseQueryStrings.seedUsersTable);
+    });
 
   var appId = Platform.isIOS ? "ca-app-pub-8187198937216043~3354678461" : Platform.isAndroid ? "ca-app-pub-8187198937216043~2308942688" : "";
 
   FirebaseAdMob.instance.initialize(appId: FirebaseAdMob.testAppId);
 
+  var analytics = FirebaseAnalytics();
+  var appFlowService = AppFlowService(database);
   var wordService = WordService();
 
   runApp(
     MyApp(
+      analytics: analytics,
+      appFlowService: appFlowService,
       wordService: wordService,
     )
   );
@@ -27,22 +44,26 @@ void main() {
 
 class MyApp extends StatelessWidget {
 
+  final FirebaseAnalytics analytics;
+  final AppFlowService appFlowService;
   final WordService wordService;
 
   const MyApp({
     Key key,
+    this.analytics,
+    this.appFlowService,
     this.wordService
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Wordie',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(wordService: this.wordService),
+      home: MyHomePage(analytics: this.analytics, appFlowService: this.appFlowService, wordService: this.wordService),
     );
   }
 }
@@ -51,9 +72,13 @@ class MyHomePage extends StatefulWidget {
 
   const MyHomePage({
     Key key,
+    this.analytics,
+    this.appFlowService,
     this.wordService
   }) : super(key: key);
 
+  final FirebaseAnalytics analytics;
+  final AppFlowService appFlowService;
   final WordService wordService;
 
   @override
@@ -66,7 +91,8 @@ class _MyHomePageState extends State<MyHomePage> {
   InterstitialAd _interstitialAd;
   MobileAdTargetingInfo _targetingInfo;
   double bottomPadding = 0.0;
-  GameFragment gameFragment;
+  FutureBuilder gameFragment;
+  Word word;
   bool showSkipModal = false;
   bool skipAllowed = false;
   bool showingInterstitialAd = false;
@@ -74,6 +100,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+
+    this.widget.analytics.logAppOpen();
 
     this._targetingInfo = MobileAdTargetingInfo(
       nonPersonalizedAds: true,
@@ -96,24 +124,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
     RewardedVideoAd.instance.listener = (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) async {
       print("RewardedVideoAd event $event");
-      if (event == RewardedVideoAdEvent.rewarded) {
+      if (event == RewardedVideoAdEvent.rewarded || event == RewardedVideoAdEvent.completed) {
         this.setState(() {
-          this.skipAllowed = rewardAmount == 1;
+          this.skipAllowed = true;
         });
       } else if (event == RewardedVideoAdEvent.loaded) {
         RewardedVideoAd.instance.show();
       } else if (event == RewardedVideoAdEvent.closed) {
-        if (await this._interstitialAd.isLoaded()) {
-          this.setState(() {
-            this.showingInterstitialAd = true;
-          });
+        if (this.skipAllowed) {
+          if (await this._interstitialAd.isLoaded()) {
+            this.setState(() {
+              this.showingInterstitialAd = true;
+            });
 
-          this._interstitialAd.show();
-        } else {
-          this.setState(() {
-            this.showSkipModal = false;
-            this.gameFragment = null;
-          });
+            this._interstitialAd.show();
+          } else {
+            this.skip();
+          }
         }
       }
     };
@@ -128,8 +155,20 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     if (this.gameFragment == null) {
-      this.gameFragment = GameFragment(
-        wordService: this.widget.wordService,
+      this.gameFragment = FutureBuilder(
+        future: this.widget.wordService.getNewWord(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+            return GameFragment(
+              word: snapshot.data,
+              onWordFound: () => this.onWordFound(),
+            );
+          }
+
+          return CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          );
+        },
       );
     }
 
@@ -139,12 +178,14 @@ class _MyHomePageState extends State<MyHomePage> {
           appBar: AppBar(
             backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
             elevation: 0.0,
-            title: Text(
-              "Wordie",
-              style: TextStyle(
-                fontFamily: 'Subscribe',
-                fontSize: 40.0
-              ),
+            title: Center(
+              child: Text(
+                "Wordie",
+                style: TextStyle(
+                  fontFamily: 'Subscribe',
+                  fontSize: 40.0
+                ),
+              )
             ),
             leading: Center(
               child: Container(
@@ -180,10 +221,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         fontSize: 24.0
                       ),
                     ),
-                    onTap: () {
-                      this.setState(() {
-                        this.showSkipModal = true;
-                      });
+                    onTap: () async {
+                      if (await this.widget.appFlowService.hasHadTodaysSkip()) {
+                        this.setState(() {
+                          this.showSkipModal = true;
+                        });
+                      } else {
+                        await this.widget.appFlowService.setHasHadTodaysSkip(true);
+
+                        this.skip();
+                      }
                     },
                   ),
                 )
@@ -193,7 +240,9 @@ class _MyHomePageState extends State<MyHomePage> {
           backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
           body: Padding(
             padding: EdgeInsets.only(bottom: this.bottomPadding),
-            child: this.gameFragment,
+            child: Center(
+              child: this.gameFragment
+            )
           )
         ),
         this.showSkipModal ? Opacity(
@@ -341,15 +390,23 @@ class _MyHomePageState extends State<MyHomePage> {
         print("Interstitial ad event: $event");
 
         if (event == MobileAdEvent.closed) {
-          this.setState(() {
-            this.showingInterstitialAd = false;
-            this.showSkipModal = false;
-            this.gameFragment = null;
-          });
-
+          this.skip();
           this.setupInterstitialAd();
         }
       }
     )..load();
+  }
+
+  void onWordFound() {
+    this.skip();
+  }
+
+  void skip() {
+    this.setState(() {
+      this.showSkipModal = false;
+      this.skipAllowed = false;
+      this.showingInterstitialAd = false;
+      this.gameFragment = null;
+    });
   }
 }

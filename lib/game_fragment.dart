@@ -7,19 +7,16 @@ import 'package:wordie_app/grid.dart';
 import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/services/word_service.dart';
 
-class GameFragment extends StatefulWidget {
+class GameFragment extends StatelessWidget {
 
-  final WordService wordService;
+  final Word word;
+  final Function onWordFound;
 
   const GameFragment({
     Key key,
-    this.wordService
+    this.word,
+    this.onWordFound
   }) : super(key: key);
-
-  @override
-  State<GameFragment> createState() {
-    return new _GameFragmentState();
-  }
 
   static Future time(int time) async {
     Completer c = new Completer();
@@ -30,72 +27,58 @@ class GameFragment extends StatefulWidget {
 
     return c.future;
   }
-}
-
-class _GameFragmentState extends State<GameFragment> {
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        child: FutureBuilder(
-          future: this.widget.wordService.getNewWord(),
-          builder: (context, AsyncSnapshot<Word> snapshot) {
-            if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(top: 16.0, bottom: 16.0),
-                    child: Grid(
-                      word: snapshot.data,
-                      grid: this.buildGridForWord(context, snapshot.data),
-                      onWordFound: () async {
-                        await GameFragment.time(1);
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(top: 16.0, bottom: 16.0),
+              child: Grid(
+                word: this.word,
+                grid: this.buildGridForWord(context, this.word),
+                onWordFound: () async {
+                  await GameFragment.time(1);
 
-                        this.setState(() {});
-                      }
-                    )
-                  ),
-                  Expanded(
-                    child: Container(
-                      color: Colors.white,
+                  this.onWordFound();
+                }
+              )
+            ),
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Color.fromRGBO(32, 162, 226, 1.0)
+                      ),
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: Center(
                       child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Color.fromRGBO(32, 162, 226, 1.0)
-                            ),
-                            borderRadius: BorderRadius.circular(16.0),
+                        padding: EdgeInsets.only(left: 32.0, right: 32.0),
+                        child: AutoSizeText(
+                          this.word.description,
+                          style: TextStyle(
+                            color: Colors.deepOrange,
+                            fontFamily: 'Subscribe'
                           ),
-                          child: Center(
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 32.0, right: 32.0),
-                              child: AutoSizeText(
-                                snapshot.data.description,
-                                style: TextStyle(
-                                  color: Colors.deepOrange,
-                                  fontFamily: 'Subscribe'
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 3,
-                              )
-                            )
-                          )
+                          textAlign: TextAlign.center,
+                          maxLines: 3,
                         )
                       )
                     )
                   )
-                ]
-              );
-            }
-
-            return CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            );
-          }
+                )
+              )
+            )
+          ]
         )
       )
     );

@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "806420440214",
+    "firebase_url": "https://wordie-5b0e3.firebaseio.com",
+    "project_id": "wordie-5b0e3",
+    "storage_bucket": "wordie-5b0e3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806420440214:android:7bec1a06126312ca",
+        "android_client_info": {
+          "package_name": "uk.co.mtapps.wordie"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "806420440214-0n6427j8hc8g8gjjo36ie8sib4442v2b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUWT7dLwLZFaK-6FkfP2kHjtGvX4PxN7I"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

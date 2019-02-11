@@ -1,4 +1,4 @@
-package com.example.wordieapp;
+package uk.co.mtapps.wordie;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
