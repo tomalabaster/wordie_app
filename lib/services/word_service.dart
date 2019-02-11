@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:wordie_app/models/word.dart';
 
@@ -10,24 +11,20 @@ class WordService {
   List<String> _words;
 
   Future<Word> getNewWord({int length = 0}) async {
-    var words = this._words;
-
-    if (words == null) {
-      var wordsResponse = await http.get('https://www.randomwordgenerator.com/json/words.json');
-      var wordsAsMaps = json.decode(wordsResponse.body)["data"] as List<dynamic>;
-      words = wordsAsMaps.map((wordMap) => (wordMap as Map)["word"] as String).where((word) => word.length < 6).toList();
-      this._words = words;
+    if (this._words == null) {
+      this._words = await this.loadWords();
+      this._words = this._words.where((word) => word.length < 6).toList();
     }
 
     if (length > 0) {
-      words = words.where((word) => word.length == length).toList();
+      _words = _words.where((word) => word.length == length).toList();
     }
 
     String word;
     String description;
 
     while (description == null) {
-      word = words[Random().nextInt(words.length)];
+      word = _words[Random().nextInt(_words.length)];
       description = await this._getDescriptionForWord(word);
     }
 
@@ -86,5 +83,11 @@ class WordService {
     }
 
     return null;
+  }
+
+  Future loadWords() async {
+    var wordsString =  await rootBundle.loadString('assets/words.json');
+    var parsedWords = json.decode(wordsString)["words"];
+    return parsedWords.cast<String>();
   }
 } 
