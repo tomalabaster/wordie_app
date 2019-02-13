@@ -8,9 +8,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:806420440214:android:7bec1a06126312ca",
+        "mobilesdk_app_id": "1:806420440214:android:d8ffa7c64b550b9f",
         "android_client_info": {
-          "package_name": "uk.co.mtapps.wordie"
+          "package_name": "uk.co.tomdev.wordie"
         }
       },
       "oauth_client": [

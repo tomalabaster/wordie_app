@@ -1,4 +1,4 @@
-package uk.co.mtapps.wordie;
+package uk.co.tomdev.wordie;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
