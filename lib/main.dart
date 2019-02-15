@@ -29,7 +29,12 @@ void main() async {
 
   var appId = Platform.isIOS ? "ca-app-pub-8187198937216043~3354678461" : Platform.isAndroid ? "ca-app-pub-8187198937216043~2308942688" : "";
 
-  FirebaseAdMob.instance.initialize(appId: FirebaseAdMob.testAppId);
+  assert(() {
+    appId = FirebaseAdMob.testAppId;
+    return true;
+  }());
+
+  FirebaseAdMob.instance.initialize(appId: appId);
 
   var analytics = FirebaseAnalytics();
   var appFlowService = AppFlowService(database);
@@ -109,6 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool showSkipModal = false;
   bool skipAllowed = false;
   bool showingInterstitialAd = false;
+  bool failedToLoadInterstitial = false;
 
   @override
   void initState() {
@@ -121,15 +127,29 @@ class _MyHomePageState extends State<MyHomePage> {
       testDevices: <String>[], // Android emulators are considered test devices
     );
 
+    var bannerAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/7768566190" : "";
+
+    assert(() {
+      bannerAdUnitId = RewardedVideoAd.testAdUnitId;
+      return true;
+    }());
+
     this._bannerAd = BannerAd(
-      adUnitId: BannerAd.testAdUnitId,
+      adUnitId: bannerAdUnitId,
       size: AdSize.smartBanner,
       targetingInfo: this._targetingInfo,
       listener: (MobileAdEvent event) {
         print("BannerAd event is $event");
-        this.setState(() {
-          this.bottomPadding = 50.0;
-        });
+        
+        if (event == MobileAdEvent.loaded) {
+          this.setState(() {
+            this.bottomPadding = 50.0;
+          });
+        } else if (event == MobileAdEvent.failedToLoad || event == MobileAdEvent.closed) {
+          this.setState(() {
+            this.bottomPadding = 0.0;
+          });
+        }
       },
     )..load()..show();
 
@@ -154,6 +174,16 @@ class _MyHomePageState extends State<MyHomePage> {
           } else {
             this.skip();
           }
+        }
+      } else if (event == RewardedVideoAdEvent.failedToLoad) {
+        if (await this._interstitialAd.isLoaded()) {
+          this.setState(() {
+            this.showingInterstitialAd = true;
+          });
+
+          this._interstitialAd.show();
+        } else {
+          this.skip();
         }
       }
     };
@@ -334,8 +364,15 @@ class _MyHomePageState extends State<MyHomePage> {
                                       )
                                     ),
                                     onTap: () async {
+                                      var rewardedAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3240400883" : "";
+
+                                      assert(() {
+                                        rewardedAdUnitId = RewardedVideoAd.testAdUnitId;
+                                        return true;
+                                      }());
+                                      
                                       await RewardedVideoAd.instance.load(
-                                        adUnitId: RewardedVideoAd.testAdUnitId,
+                                        adUnitId: rewardedAdUnitId,
                                         targetingInfo: this._targetingInfo);
                                     },
                                   )
@@ -415,8 +452,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void setupInterstitialAd() {
+
+    var interstitialAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3516443492" : "";
+
+    assert(() {
+      interstitialAdUnitId = InterstitialAd.testAdUnitId;
+      return true;
+    }());
+    
     this._interstitialAd = InterstitialAd(
-      adUnitId: InterstitialAd.testAdUnitId,
+      adUnitId: interstitialAdUnitId,
       targetingInfo: this._targetingInfo,
       listener: (event) {
         print("Interstitial ad event: $event");
@@ -424,6 +469,10 @@ class _MyHomePageState extends State<MyHomePage> {
         if (event == MobileAdEvent.closed) {
           this.skip();
           this.setupInterstitialAd();
+        } else if (event == MobileAdEvent.loaded) {
+          this.failedToLoadInterstitial = false;
+        } else if (event == MobileAdEvent.failedToLoad) {
+          this.failedToLoadInterstitial = true;
         }
       }
     )..load();
