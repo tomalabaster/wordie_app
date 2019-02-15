@@ -149,7 +149,7 @@ class _GridState extends State<Grid> {
       return "ltrbtt";
     } else if (angle >= -112.5 && angle < -67.5) {
       return "bttbtt";
-    } else if (angle >= -67.5 && angle < 22.5) {
+    } else if (angle >= -67.5 && angle < -22.5) {
       return "rtlbtt";
     } else if (angle >= -22.5 && angle < 0) {
       return "rtlrtl";
