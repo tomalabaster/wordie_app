@@ -105,7 +105,7 @@ class GameFragment extends StatelessWidget {
     for (var i=0; i<8; i++) {
       var row = [];
       for (var j=0; j<8; j++) {
-        row.add(alphabet[random.nextInt(8)]);
+        row.add(alphabet[random.nextInt(25)]);
       }
       grid.add(row);
     }
