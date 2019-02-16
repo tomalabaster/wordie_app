@@ -36,7 +36,7 @@ class _CharacterState extends State<Character> {
           style: TextStyle(
             color: this.widget.correct ? Colors.green : this.widget.selected ? Colors.orange : Colors.white,
             fontFamily: 'Subscribe',
-            fontSize: 32.0,
+            fontSize: this.widget.selected ? 48.0 : 32.0,
             fontWeight: FontWeight.normal
           )
         )

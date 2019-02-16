@@ -115,6 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool skipAllowed = false;
   bool showingInterstitialAd = false;
   bool failedToLoadInterstitial = false;
+  bool _loadingRewardedVideoAd = false;
 
   @override
   void initState() {
@@ -186,6 +187,10 @@ class _MyHomePageState extends State<MyHomePage> {
           this.skip();
         }
       }
+
+      this.setState(() {
+        this._loadingRewardedVideoAd = false;
+      });
     };
   }
 
@@ -353,7 +358,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                         color: Color.fromRGBO(32, 162, 226, 1.0)
                                       ),
                                       child: Center(
-                                        child: Text(
+                                        child: this._loadingRewardedVideoAd ? Transform.scale(
+                                          scale: 0.5,
+                                          child: CircularProgressIndicator(
+                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                          )
+                                        ) : Text(
                                           "Ad",
                                           style: TextStyle(
                                             color: Colors.white,
@@ -370,6 +380,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                         rewardedAdUnitId = RewardedVideoAd.testAdUnitId;
                                         return true;
                                       }());
+
+                                      this.setState(() {
+                                        this._loadingRewardedVideoAd = true;
+                                      });
                                       
                                       await RewardedVideoAd.instance.load(
                                         adUnitId: rewardedAdUnitId,
@@ -377,29 +391,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                     },
                                   )
                                 ),
-                                // Padding(
-                                //   padding: EdgeInsets.only(top: 16.0),
-                                //   child: GestureDetector(
-                                //     child: Container(
-                                //       width: 128.0,
-                                //       height: 48.0,
-                                //       decoration: BoxDecoration(
-                                //         borderRadius: BorderRadius.circular(8.0),
-                                //         color: Colors.green
-                                //       ),
-                                //       child: Center(
-                                //         child: Text(
-                                //           "Go pro!",
-                                //           style: TextStyle(
-                                //             color: Colors.white,
-                                //             fontFamily: 'Subscribe',
-                                //             fontSize: 28.0
-                                //           )
-                                //         )
-                                //       )
-                                //     ),
-                                //   )
-                                // )
                               ]
                             ),
                             padding: EdgeInsets.all(16.0),
