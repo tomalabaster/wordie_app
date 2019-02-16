@@ -7,6 +7,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:wordie_app/preferences/database_query_strings.dart';
 import 'package:wordie_app/screens/game_screen.dart';
+import 'package:wordie_app/screens/home_screen.dart';
 import 'package:wordie_app/services/app_flow_service.dart';
 import 'package:wordie_app/services/game_state_service.dart';
 import 'package:wordie_app/services/word_service.dart';
@@ -71,12 +72,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: GameScreen(
-        analytics: this.analytics,
-        appFlowService: this.appFlowService,
-        gameStateService: this.gameStateService,
-        wordService: this.wordService
-      ),
+      routes: {
+        '/': (context) => HomeScreen(),
+        '/game': (context) => GameScreen(
+          analytics: this.analytics,
+          appFlowService: this.appFlowService,
+          gameStateService: this.gameStateService,
+          wordService: this.wordService
+        )
+      },
     );
   }
 }

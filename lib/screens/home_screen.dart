@@ -11,6 +11,54 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.WordieBlue,
+      body: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(top: 96.0),
+                  child: Text(
+                    "Wordie!",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Subscribe',
+                      fontSize: 72.0
+                    ),
+                  )
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 96.0),
+                  child: GestureDetector(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 4.0
+                        ),
+                        borderRadius: BorderRadius.circular(8.0)
+                      ),
+                      padding: EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 8.0),
+                      child: Text(
+                        "Play!",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Subscribe',
+                          fontSize: 32.0
+                        ),
+                      )
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pushReplacementNamed('/game');
+                    },
+                  )
+                )
+              ],
+            )
+          )
+        ]
+      ),
     );
   }
 }
