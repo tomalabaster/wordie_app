@@ -53,7 +53,26 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.of(context).pushReplacementNamed('/game');
                     },
                   )
-                )
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 48.0),
+                  child: GestureDetector(
+                    child: Container(
+                      padding: EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 8.0),
+                      child: Text(
+                        "About",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Subscribe',
+                          fontSize: 28.0
+                        ),
+                      )
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/about');
+                    },
+                  )
+                ),
               ],
             )
           )

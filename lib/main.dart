@@ -6,6 +6,7 @@ import 'package:firebase_admob/firebase_admob.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:wordie_app/preferences/database_query_strings.dart';
+import 'package:wordie_app/screens/about_screen.dart';
 import 'package:wordie_app/screens/game_screen.dart';
 import 'package:wordie_app/screens/home_screen.dart';
 import 'package:wordie_app/services/app_flow_service.dart';
@@ -79,7 +80,8 @@ class MyApp extends StatelessWidget {
           appFlowService: this.appFlowService,
           gameStateService: this.gameStateService,
           wordService: this.wordService
-        )
+        ),
+        '/about': (context) => AboutScreen()
       },
     );
   }
