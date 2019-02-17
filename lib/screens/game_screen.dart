@@ -83,42 +83,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
     this.setupInterstitialAd();
 
-    RewardedVideoAd.instance.listener = (RewardedVideoAdEvent event, {String rewardType, int rewardAmount}) async {
-      print("RewardedVideoAd event $event");
-      if (event == RewardedVideoAdEvent.rewarded || event == RewardedVideoAdEvent.completed) {
-        this.setState(() {
-          this.skipAllowed = true;
-        });
-      } else if (event == RewardedVideoAdEvent.loaded) {
-        RewardedVideoAd.instance.show();
-      } else if (event == RewardedVideoAdEvent.closed) {
-        if (this.skipAllowed) {
-          if (await this._interstitialAd.isLoaded()) {
-            this.setState(() {
-              this.showingInterstitialAd = true;
-            });
-
-            this._interstitialAd.show();
-          } else {
-            this.skip();
-          }
-        }
-      } else if (event == RewardedVideoAdEvent.failedToLoad) {
-        if (await this._interstitialAd.isLoaded()) {
-          this.setState(() {
-            this.showingInterstitialAd = true;
-          });
-
-          this._interstitialAd.show();
-        } else {
-          this.skip();
-        }
-      }
-
-      this.setState(() {
-        this._loadingRewardedVideoAd = false;
-      });
-    };
+    this.loadNumberCompleted();
   }
 
   @override
@@ -247,7 +212,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "You've used your free skip for today.\n\nWatch an ad or go pro?",
+                                    "You've used your free skip for today.\n\nView a real quick ad?",
                                     style: TextStyle(
                                       fontFamily: 'Subscribe',
                                       fontSize: 24.0
@@ -280,21 +245,12 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                                           )
                                         )
                                       ),
-                                      onTap: () async {
-                                        var rewardedAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3240400883" : "";
-
-                                        assert(() {
-                                          rewardedAdUnitId = RewardedVideoAd.testAdUnitId;
-                                          return true;
-                                        }());
-
+                                      onTap: () {
                                         this.setState(() {
-                                          this._loadingRewardedVideoAd = true;
+                                          this.showingInterstitialAd = true;
                                         });
-                                        
-                                        await RewardedVideoAd.instance.load(
-                                          adUnitId: rewardedAdUnitId,
-                                          targetingInfo: this._targetingInfo);
+
+                                        this._interstitialAd.show();
                                       },
                                     )
                                   ),
@@ -359,7 +315,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   }
 
   void setupInterstitialAd() {
-
     var interstitialAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3516443492" : "";
 
     assert(() {
