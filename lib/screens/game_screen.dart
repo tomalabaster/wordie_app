@@ -28,7 +28,7 @@ class GameScreen extends StatefulWidget {
   _GameScreenState createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateMixin {
 
   BannerAd _bannerAd;
   InterstitialAd _interstitialAd;
@@ -41,6 +41,8 @@ class _GameScreenState extends State<GameScreen> {
   bool showingInterstitialAd = false;
   bool failedToLoadInterstitial = false;
   bool _loadingRewardedVideoAd = false;
+
+  int _numberCompleted = 0;
 
   @override
   void initState() {
@@ -157,7 +159,7 @@ class _GameScreenState extends State<GameScreen> {
               elevation: 0.0,
               title: Center(
                 child: Text(
-                  "Wordie",
+                  this._numberCompleted == 0 ? "Wordie" : "${this._numberCompleted}",
                   style: TextStyle(
                     fontFamily: 'Subscribe',
                     fontSize: 40.0
@@ -348,6 +350,14 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  void loadNumberCompleted() async {
+    var numberCompleted = await this.widget.gameStateService.getWordsCompletedCount();
+
+    this.setState(() {
+      this._numberCompleted = numberCompleted;
+    });
+  }
+
   void setupInterstitialAd() {
 
     var interstitialAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3516443492" : "";
@@ -378,6 +388,7 @@ class _GameScreenState extends State<GameScreen> {
   void onWordFound() async {
     await this.widget.gameStateService.setWordCompleted(this.word);
     this.skip();
+    this.loadNumberCompleted();
   }
 
   void skip() {
