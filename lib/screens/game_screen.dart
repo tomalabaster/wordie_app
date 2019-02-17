@@ -28,7 +28,7 @@ class GameScreen extends StatefulWidget {
   _GameScreenState createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateMixin {
 
   BannerAd _bannerAd;
   InterstitialAd _interstitialAd;
@@ -41,6 +41,8 @@ class _GameScreenState extends State<GameScreen> {
   bool showingInterstitialAd = false;
   bool failedToLoadInterstitial = false;
   bool _loadingRewardedVideoAd = false;
+
+  int _numberCompleted = 0;
 
   @override
   void initState() {
@@ -147,224 +149,213 @@ class _GameScreenState extends State<GameScreen> {
       );
     }
 
-    return Stack(
-      children: [
-        Scaffold(
-          appBar: AppBar(
-            backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
-            elevation: 0.0,
-            title: Center(
-              child: Text(
-                "Wordie",
-                style: TextStyle(
-                  fontFamily: 'Subscribe',
-                  fontSize: 40.0
-                ),
-              )
-            ),
-            leading: Center(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.orangeAccent
-                  ),
-                  borderRadius: BorderRadius.circular(8.0)
-                ),
-                child: Padding(
-                  padding: EdgeInsets.only(left: 8.0, right: 8.0),
-                  child: FutureBuilder(
-                    future: this.widget.gameStateService.getWordsCompletedCount(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                        return Text(
-                          "${snapshot.data}",
-                          style: TextStyle(
-                            color: Colors.orangeAccent,
-                            fontFamily: 'Subscribe',
-                            fontSize: 24.0,
-                            height: 1.1
-                          ),
-                        );
-                      }
-
-                      return Text(
-                        "",
-                        style: TextStyle(
-                          color: Colors.orangeAccent,
-                          fontFamily: 'Subscribe',
-                          fontSize: 24.0,
-                          height: 1.1
-                        ),
-                      );
-                    }
-                  )
-                )
-              )
-            ),
-            actions: <Widget>[
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.only(right: 16.0),
-                  child: GestureDetector(
-                    child: Text(
-                      "Skip",
-                      style: TextStyle(
-                        fontFamily: 'Subscribe',
-                        fontSize: 24.0
-                      ),
-                    ),
-                    onTap: () async {
-                      if (await this.widget.appFlowService.hasHadTodaysSkip()) {
-                        this.setState(() {
-                          this.showSkipModal = true;
-                        });
-                      } else {
-                        await this.widget.appFlowService.setHasHadTodaysSkip(true);
-
-                        this.skip();
-                      }
-                    },
+    return WillPopScope(
+      onWillPop: () {},
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
+              elevation: 0.0,
+              title: Center(
+                child: Text(
+                  this._numberCompleted == 0 ? "Wordie" : "${this._numberCompleted}",
+                  style: TextStyle(
+                    fontFamily: 'Subscribe',
+                    fontSize: 40.0
                   ),
                 )
-              )
-            ],
-          ),
-          backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
-          body: Padding(
-            padding: EdgeInsets.only(bottom: this.bottomPadding),
-            child: Center(
-              child: this.gameFragment
-            )
-          )
-        ),
-        this.showSkipModal ? Opacity(
-          opacity: 1.0,
-          child: Material(
-            color: Colors.black.withAlpha(196),
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.only(left: 32.0, right: 32.0),
+              ),
+              leading: Center(
                 child: Container(
-                  height: 360.0,
-                  child: Stack(
-                    children: [
-                      Align(
-                        alignment: Alignment.center,
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
-                          child: Container(
-                            height: 360.0,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(
-                                width: 4.0
-                              ),
-                              borderRadius: BorderRadius.circular(8.0)
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "You've used your free skip for today.\n\nWatch an ad or go pro?",
-                                  style: TextStyle(
-                                    fontFamily: 'Subscribe',
-                                    fontSize: 24.0
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(top: 32.0),
-                                  child: GestureDetector(
-                                    child: Container(
-                                      width: 128.0,
-                                      height: 48.0,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8.0),
-                                        color: Color.fromRGBO(32, 162, 226, 1.0)
-                                      ),
-                                      child: Center(
-                                        child: this._loadingRewardedVideoAd ? Transform.scale(
-                                          scale: 0.5,
-                                          child: CircularProgressIndicator(
-                                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                          )
-                                        ) : Text(
-                                          "Ad",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontFamily: 'Subscribe',
-                                            fontSize: 28.0
-                                          )
-                                        )
-                                      )
-                                    ),
-                                    onTap: () async {
-                                      var rewardedAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3240400883" : "";
-
-                                      assert(() {
-                                        rewardedAdUnitId = RewardedVideoAd.testAdUnitId;
-                                        return true;
-                                      }());
-
-                                      this.setState(() {
-                                        this._loadingRewardedVideoAd = true;
-                                      });
-                                      
-                                      await RewardedVideoAd.instance.load(
-                                        adUnitId: rewardedAdUnitId,
-                                        targetingInfo: this._targetingInfo);
-                                    },
-                                  )
-                                ),
-                              ]
-                            ),
-                            padding: EdgeInsets.all(16.0),
-                          ),
-                        )
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 8.0, right: 8.0),
+                    child: GestureDetector(
+                      child: Icon(
+                        Icons.home,
+                        color: Colors.white,
+                        size: 32.0,
                       ),
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: GestureDetector(
-                          child: Container(
-                            width: 32.0,
-                            height: 32.0,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                width: 4.0
-                              ),
-                              borderRadius: BorderRadius.circular(32.0),
-                              color: Colors.white
-                            ),
-                            child: Center(
-                              child: Text(
-                                "X",
-                                style: TextStyle(
-                                  fontFamily: "Subscribe",
-                                  fontSize: 24.0,
-                                  height: 1.1
-                                ),
-                              )
-                            ),
-                          ),
-                          onTap: () {
-                            this.setState(() {
-                              this.showSkipModal = false;
-                            });
-                          },
-                        ),
-                      ),
-                    ]
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                    )
                   )
                 )
               ),
+              actions: <Widget>[
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(right: 16.0),
+                    child: GestureDetector(
+                      child: Text(
+                        "Skip",
+                        style: TextStyle(
+                          fontFamily: 'Subscribe',
+                          fontSize: 24.0
+                        ),
+                      ),
+                      onTap: () async {
+                        if (await this.widget.appFlowService.hasHadTodaysSkip()) {
+                          this.setState(() {
+                            this.showSkipModal = true;
+                          });
+                        } else {
+                          await this.widget.appFlowService.setHasHadTodaysSkip(true);
+
+                          this.skip();
+                        }
+                      },
+                    ),
+                  )
+                )
+              ],
+            ),
+            backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
+            body: Padding(
+              padding: EdgeInsets.only(bottom: this.bottomPadding),
+              child: Center(
+                child: this.gameFragment
+              )
             )
-          )
-        ) : Container(),
-        this.showingInterstitialAd ? Container(
-          color: Colors.black,
-        ) : Container()
-      ]
+          ),
+          this.showSkipModal ? Opacity(
+            opacity: 1.0,
+            child: Material(
+              color: Colors.black.withAlpha(196),
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.only(left: 32.0, right: 32.0),
+                  child: Container(
+                    height: 360.0,
+                    child: Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
+                            child: Container(
+                              height: 360.0,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(
+                                  width: 4.0
+                                ),
+                                borderRadius: BorderRadius.circular(8.0)
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "You've used your free skip for today.\n\nWatch an ad or go pro?",
+                                    style: TextStyle(
+                                      fontFamily: 'Subscribe',
+                                      fontSize: 24.0
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 32.0),
+                                    child: GestureDetector(
+                                      child: Container(
+                                        width: 128.0,
+                                        height: 48.0,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8.0),
+                                          color: Color.fromRGBO(32, 162, 226, 1.0)
+                                        ),
+                                        child: Center(
+                                          child: this._loadingRewardedVideoAd ? Transform.scale(
+                                            scale: 0.5,
+                                            child: CircularProgressIndicator(
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                            )
+                                          ) : Text(
+                                            "Ad",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: 'Subscribe',
+                                              fontSize: 28.0
+                                            )
+                                          )
+                                        )
+                                      ),
+                                      onTap: () async {
+                                        var rewardedAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3240400883" : "";
+
+                                        assert(() {
+                                          rewardedAdUnitId = RewardedVideoAd.testAdUnitId;
+                                          return true;
+                                        }());
+
+                                        this.setState(() {
+                                          this._loadingRewardedVideoAd = true;
+                                        });
+                                        
+                                        await RewardedVideoAd.instance.load(
+                                          adUnitId: rewardedAdUnitId,
+                                          targetingInfo: this._targetingInfo);
+                                      },
+                                    )
+                                  ),
+                                ]
+                              ),
+                              padding: EdgeInsets.all(16.0),
+                            ),
+                          )
+                        ),
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: GestureDetector(
+                            child: Container(
+                              width: 32.0,
+                              height: 32.0,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  width: 4.0
+                                ),
+                                borderRadius: BorderRadius.circular(32.0),
+                                color: Colors.white
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "X",
+                                  style: TextStyle(
+                                    fontFamily: "Subscribe",
+                                    fontSize: 24.0,
+                                    height: 1.1
+                                  ),
+                                )
+                              ),
+                            ),
+                            onTap: () {
+                              this.setState(() {
+                                this.showSkipModal = false;
+                              });
+                            },
+                          ),
+                        ),
+                      ]
+                    )
+                  )
+                ),
+              )
+            )
+          ) : Container(),
+          this.showingInterstitialAd ? Container(
+            color: Colors.black,
+          ) : Container()
+        ]
+      )
     );
+  }
+
+  void loadNumberCompleted() async {
+    var numberCompleted = await this.widget.gameStateService.getWordsCompletedCount();
+
+    this.setState(() {
+      this._numberCompleted = numberCompleted;
+    });
   }
 
   void setupInterstitialAd() {
@@ -397,6 +388,7 @@ class _GameScreenState extends State<GameScreen> {
   void onWordFound() async {
     await this.widget.gameStateService.setWordCompleted(this.word);
     this.skip();
+    this.loadNumberCompleted();
   }
 
   void skip() {

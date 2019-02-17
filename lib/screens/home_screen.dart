@@ -50,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       )
                     ),
                     onTap: () {
-                      Navigator.of(context).pushReplacementNamed('/game');
+                      Navigator.of(context).pushNamed('/game');
                     },
                   )
                 ),
