@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:wordie_app/character.dart';
+import 'package:wordie_app/features/game_grid/character.dart';
 import 'package:wordie_app/models/word.dart';
 
 class Grid extends StatefulWidget {

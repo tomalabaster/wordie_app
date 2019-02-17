@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:wordie_app/description_container.dart';
-import 'package:wordie_app/grid.dart';
+import 'package:wordie_app/features/description_container.dart';
+import 'package:wordie_app/features/game_grid/grid.dart';
 import 'package:wordie_app/models/word.dart';
-import 'package:wordie_app/services/word_service.dart';
 
 class GameFragment extends StatelessWidget {
 
