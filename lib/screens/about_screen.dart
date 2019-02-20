@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wordie_app/preferences/styles.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -44,13 +45,39 @@ class AboutScreen extends StatelessWidget {
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: EdgeInsets.only(bottom: 48.0),
-              child: Text(
-                "Made by <tomdev/>",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Subscribe',
-                  fontSize: 24.0
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 24.0),
+                    child: GestureDetector(
+                      child: Text(
+                        "Privacy policy",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Subscribe',
+                          fontSize: 16.0
+                        ),
+                      ),
+                      onTap: () async {
+                        const url = 'https://tomdev.co.uk/privacy-policy';
+                        if (await canLaunch(url)) {
+                          await launch(url);
+                        } else {
+                          throw 'Could not launch $url';
+                        }
+                      },
+                    ),
+                  ),
+                  Text(
+                    "Made by <tomdev/>",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Subscribe',
+                      fontSize: 24.0
+                    ),
+                  )
+                ]
               )
             ),
           )
