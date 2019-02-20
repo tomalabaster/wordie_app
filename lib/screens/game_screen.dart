@@ -21,7 +21,7 @@ class GameScreen extends StatefulWidget {
 
   final FirebaseAnalytics analytics;
   final IAppFlowService appFlowService;
-  final GameStateService gameStateService;
+  final IGameStateService gameStateService;
   final WordService wordService;
 
   @override

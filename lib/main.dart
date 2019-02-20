@@ -49,7 +49,7 @@ void main() async {
 
   var analytics = FirebaseAnalytics();
   var appFlowService = FirebaseAppFlowService(userStore);
-  var gameStateService = GameStateService(database);
+  var gameStateService = FirebaseGameStateService(userStore);
   var wordService = WordService();
 
   runApp(
@@ -66,7 +66,7 @@ class MyApp extends StatelessWidget {
 
   final FirebaseAnalytics analytics;
   final IAppFlowService appFlowService;
-  final GameStateService gameStateService;
+  final IGameStateService gameStateService;
   final WordService wordService;
 
   const MyApp({
