@@ -20,7 +20,7 @@ class GameScreen extends StatefulWidget {
   }) : super(key: key);
 
   final FirebaseAnalytics analytics;
-  final AppFlowService appFlowService;
+  final IAppFlowService appFlowService;
   final GameStateService gameStateService;
   final WordService wordService;
 
@@ -52,7 +52,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
     this._targetingInfo = MobileAdTargetingInfo(
       nonPersonalizedAds: true,
-      testDevices: <String>[], // Android emulators are considered test devices
+      testDevices: <String>["b33e7086ea0bca1ef39f2b32801854b7"], // Android emulators are considered test devices
     );
 
     var bannerAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/7768566190" : "";

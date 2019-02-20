@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_admob/firebase_admob.dart';
@@ -35,8 +38,17 @@ void main() async {
 
   FirebaseAdMob.instance.initialize(appId: appId);
 
+  await Firestore.instance.settings(
+    timestampsInSnapshotsEnabled: true
+  );
+  
+  var user = await FirebaseAuth.instance.signInAnonymously();
+  print(user.uid);
+
+  var userStore =  Firestore.instance.collection('users').document(user.uid);
+
   var analytics = FirebaseAnalytics();
-  var appFlowService = AppFlowService(database);
+  var appFlowService = FirebaseAppFlowService(userStore);
   var gameStateService = GameStateService(database);
   var wordService = WordService();
 
@@ -53,7 +65,7 @@ void main() async {
 class MyApp extends StatelessWidget {
 
   final FirebaseAnalytics analytics;
-  final AppFlowService appFlowService;
+  final IAppFlowService appFlowService;
   final GameStateService gameStateService;
   final WordService wordService;
 
