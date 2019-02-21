@@ -7,6 +7,7 @@ import 'package:wordie_app/models/word.dart';
 abstract class IGameStateService {
   Future<void> setWordCompleted(Word word);
   Future<int> getWordsCompletedCount();
+  Future<void> setWordSkipped(Word word);
 }
 
 class GameStateService extends IGameStateService {
@@ -28,6 +29,10 @@ class GameStateService extends IGameStateService {
     var wordsCompleted = await this._database.query("WordsCompleted");
 
     return wordsCompleted.length;
+  }
+
+  Future<void> setWordSkipped(Word word) async {
+    
   }
 }
 
@@ -57,4 +62,11 @@ class FirebaseGameStateService extends IGameStateService {
     await this._userStore.updateData(data);
   }
 
+  Future<void> setWordSkipped(Word word) async {
+    var data = (await this._userStore.get()).data;
+
+    data["skippedWords"] = FieldValue.arrayUnion([word.word]);
+    
+    await this._userStore.updateData(data);
+  }
 }

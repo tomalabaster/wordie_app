@@ -46,11 +46,12 @@ void main() async {
   print(user.uid);
 
   var userStore =  Firestore.instance.collection('users').document(user.uid);
+  var wordsCollection = Firestore.instance.collection('words');
 
   var analytics = FirebaseAnalytics();
   var appFlowService = FirebaseAppFlowService(userStore);
   var gameStateService = FirebaseGameStateService(userStore);
-  var wordService = WordService();
+  var wordService = FirebaseWordService(wordsCollection);
 
   runApp(
     MyApp(
@@ -67,7 +68,7 @@ class MyApp extends StatelessWidget {
   final FirebaseAnalytics analytics;
   final IAppFlowService appFlowService;
   final IGameStateService gameStateService;
-  final WordService wordService;
+  final IWordService wordService;
 
   const MyApp({
     Key key,

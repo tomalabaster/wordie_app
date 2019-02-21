@@ -22,7 +22,7 @@ class GameScreen extends StatefulWidget {
   final FirebaseAnalytics analytics;
   final IAppFlowService appFlowService;
   final IGameStateService gameStateService;
-  final WordService wordService;
+  final IWordService wordService;
 
   @override
   _GameScreenState createState() => _GameScreenState();
@@ -346,12 +346,14 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     this.loadNumberCompleted();
   }
 
-  void skip() {
+  void skip() async {
     this.setState(() {
       this.showSkipModal = false;
       this.skipAllowed = false;
       this.showingInterstitialAd = false;
       this.gameFragment = null;
     });
+
+    await this.widget.gameStateService.setWordSkipped(this.word);
   }
 }
