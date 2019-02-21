@@ -46,8 +46,12 @@ void main() async {
   var user = await FirebaseAuth.instance.signInAnonymously();
   print(user.uid);
 
-  var userStore =  Firestore.instance.collection('users').document(user.uid);
+  var userStore = Firestore.instance.collection('users').document(user.uid);
   var wordsCollection = Firestore.instance.collection('words');
+
+  if (!(await userStore.get()).exists) {
+    userStore.setData({});
+  }
 
   var analytics = FirebaseAnalytics();
   var appFlowService = FirebaseAppFlowService(userStore);
