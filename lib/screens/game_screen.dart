@@ -342,11 +342,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   void onWordFound() async {
     await this.widget.gameStateService.setWordCompleted(this.word);
-    this.skip();
+    this.skip(
+      wordFound: true
+    );
     this.loadNumberCompleted();
   }
 
-  void skip() async {
+  void skip({wordFound = false}) async {
     this.setState(() {
       this.showSkipModal = false;
       this.skipAllowed = false;
@@ -354,6 +356,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       this.gameFragment = null;
     });
 
-    await this.widget.gameStateService.setWordSkipped(this.word);
+    if (!wordFound) {
+      await this.widget.gameStateService.setWordSkipped(this.word);
+    }
   }
 }
