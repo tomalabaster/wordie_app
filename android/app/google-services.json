@@ -15,6 +15,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "806420440214-9j0574kq1goojhrge7jdnedodegc1ggm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "uk.co.tomdev.wordie",
+            "certificate_hash": "9d048c5e95a77828a49809b049ab144603c200b0"
+          }
+        },
+        {
+          "client_id": "806420440214-uus68vgss9ktia4ls8sirh2shoc2m0hf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "uk.co.tomdev.wordie",
+            "certificate_hash": "a49e3109bfc9c46fd7807bfd5804932e58bcfb67"
+          }
+        },
+        {
           "client_id": "806420440214-0n6427j8hc8g8gjjo36ie8sib4442v2b.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,13 +45,26 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "806420440214-0n6427j8hc8g8gjjo36ie8sib4442v2b.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "806420440214-mbi1jndvta9c18oo7sa6pfvn7shkpurb.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "uk.co.tomdev.wordie"
+              }
+            }
+          ]
         },
         "ads_service": {
           "status": 2
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-8187198937216043~2308942688"
     }
   ],
   "configuration_version": "1"
