@@ -1,19 +1,34 @@
+import 'dart:async';
+
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:wordie_app/main.dart';
 import 'package:wordie_app/preferences/styles.dart';
 
 class HomeScreen extends StatefulWidget {
+  
+  final FirebaseAnalytics analytics;
+
+  const HomeScreen({
+    Key key,
+    this.analytics
+  }) : super(key: key);
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
 
-
   @override
   void initState() {
     super.initState();
+  }
+
+  Future<void> asyncInitState() async {
+    await this.widget.analytics.logAppOpen();
   }
 
   @override
