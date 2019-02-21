@@ -20,9 +20,9 @@ class GameScreen extends StatefulWidget {
   }) : super(key: key);
 
   final FirebaseAnalytics analytics;
-  final AppFlowService appFlowService;
-  final GameStateService gameStateService;
-  final WordService wordService;
+  final IAppFlowService appFlowService;
+  final IGameStateService gameStateService;
+  final IWordService wordService;
 
   @override
   _GameScreenState createState() => _GameScreenState();
@@ -52,7 +52,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
     this._targetingInfo = MobileAdTargetingInfo(
       nonPersonalizedAds: true,
-      testDevices: <String>[], // Android emulators are considered test devices
+      testDevices: <String>["b33e7086ea0bca1ef39f2b32801854b7"], // Android emulators are considered test devices
     );
 
     var bannerAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/7768566190" : "";
@@ -342,16 +342,22 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   void onWordFound() async {
     await this.widget.gameStateService.setWordCompleted(this.word);
-    this.skip();
+    this.skip(
+      wordFound: true
+    );
     this.loadNumberCompleted();
   }
 
-  void skip() {
+  void skip({wordFound = false}) async {
     this.setState(() {
       this.showSkipModal = false;
       this.skipAllowed = false;
       this.showingInterstitialAd = false;
       this.gameFragment = null;
     });
+
+    if (!wordFound) {
+      await this.widget.gameStateService.setWordSkipped(this.word);
+    }
   }
 }

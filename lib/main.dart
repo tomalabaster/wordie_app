@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/preferences/database_query_strings.dart';
 import 'package:wordie_app/screens/about_screen.dart';
 import 'package:wordie_app/screens/game_screen.dart';
@@ -35,10 +39,24 @@ void main() async {
 
   FirebaseAdMob.instance.initialize(appId: appId);
 
+  await Firestore.instance.settings(
+    timestampsInSnapshotsEnabled: true
+  );
+  
+  var user = await FirebaseAuth.instance.signInAnonymously();
+  print(user.uid);
+
+  var userStore =  Firestore.instance.collection('users').document(user.uid);
+  var wordsCollection = Firestore.instance.collection('words');
+
   var analytics = FirebaseAnalytics();
-  var appFlowService = AppFlowService(database);
-  var gameStateService = GameStateService(database);
-  var wordService = WordService();
+  var appFlowService = FirebaseAppFlowService(userStore);
+  var gameStateService = FirebaseGameStateService(userStore);
+  var wordService = FirebaseWordService(wordsCollection);
+
+  var oldGameStateService = GameStateService(database);
+
+  await migrateIfNeeded(oldGameStateService, gameStateService, database);
 
   runApp(
     MyApp(
@@ -50,12 +68,25 @@ void main() async {
   );
 }
 
+Future<void> migrateIfNeeded(IGameStateService oldService, IGameStateService newService, Database database) async {
+  if ((await oldService.getWordsCompletedCount()) > 0) {
+    var oldCompletedWordsRaw = await database.query("WordsCompleted");
+    var oldCompletedWords = oldCompletedWordsRaw.map((word) => word["word"]);
+
+    for (var word in oldCompletedWords) {
+      await newService.setWordCompleted(Word(word, ""));
+    }
+
+    await database.delete("WordsCompleted");
+  }
+}
+
 class MyApp extends StatelessWidget {
 
   final FirebaseAnalytics analytics;
-  final AppFlowService appFlowService;
-  final GameStateService gameStateService;
-  final WordService wordService;
+  final IAppFlowService appFlowService;
+  final IGameStateService gameStateService;
+  final IWordService wordService;
 
   const MyApp({
     Key key,
