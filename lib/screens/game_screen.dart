@@ -20,9 +20,9 @@ class GameScreen extends StatefulWidget {
   }) : super(key: key);
 
   final FirebaseAnalytics analytics;
-  final AppFlowService appFlowService;
-  final GameStateService gameStateService;
-  final WordService wordService;
+  final IAppFlowService appFlowService;
+  final IGameStateService gameStateService;
+  final IWordService wordService;
 
   @override
   _GameScreenState createState() => _GameScreenState();
@@ -36,11 +36,9 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   double bottomPadding = 0.0;
   FutureBuilder gameFragment;
   Word word;
-  bool showSkipModal = false;
   bool skipAllowed = false;
   bool showingInterstitialAd = false;
   bool failedToLoadInterstitial = false;
-  bool _loadingRewardedVideoAd = false;
 
   int _numberCompleted = 0;
 
@@ -52,7 +50,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
     this._targetingInfo = MobileAdTargetingInfo(
       nonPersonalizedAds: true,
-      testDevices: <String>[], // Android emulators are considered test devices
+      testDevices: <String>["b33e7086ea0bca1ef39f2b32801854b7"], // Android emulators are considered test devices
     );
 
     var bannerAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/7768566190" : "";
@@ -163,8 +161,10 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
                       onTap: () async {
                         if (await this.widget.appFlowService.hasHadTodaysSkip()) {
                           this.setState(() {
-                            this.showSkipModal = true;
+                            this.showingInterstitialAd = true;
                           });
+
+                          this._interstitialAd.show();
                         } else {
                           await this.widget.appFlowService.setHasHadTodaysSkip(true);
 
@@ -184,120 +184,6 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               )
             )
           ),
-          this.showSkipModal ? Opacity(
-            opacity: 1.0,
-            child: Material(
-              color: Colors.black.withAlpha(196),
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 32.0, right: 32.0),
-                  child: Container(
-                    height: 360.0,
-                    child: Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
-                            child: Container(
-                              height: 360.0,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  width: 4.0
-                                ),
-                                borderRadius: BorderRadius.circular(8.0)
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "You've used your free skip for today.\n\nView a real quick ad?",
-                                    style: TextStyle(
-                                      fontFamily: 'Subscribe',
-                                      fontSize: 24.0
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 32.0),
-                                    child: GestureDetector(
-                                      child: Container(
-                                        width: 128.0,
-                                        height: 48.0,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8.0),
-                                          color: Color.fromRGBO(32, 162, 226, 1.0)
-                                        ),
-                                        child: Center(
-                                          child: this._loadingRewardedVideoAd ? Transform.scale(
-                                            scale: 0.5,
-                                            child: CircularProgressIndicator(
-                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                            )
-                                          ) : Text(
-                                            "Ad",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontFamily: 'Subscribe',
-                                              fontSize: 28.0
-                                            )
-                                          )
-                                        )
-                                      ),
-                                      onTap: () {
-                                        this.setState(() {
-                                          this.showingInterstitialAd = true;
-                                        });
-
-                                        this._interstitialAd.show();
-                                      },
-                                    )
-                                  ),
-                                ]
-                              ),
-                              padding: EdgeInsets.all(16.0),
-                            ),
-                          )
-                        ),
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: GestureDetector(
-                            child: Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  width: 4.0
-                                ),
-                                borderRadius: BorderRadius.circular(32.0),
-                                color: Colors.white
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "X",
-                                  style: TextStyle(
-                                    fontFamily: "Subscribe",
-                                    fontSize: 24.0,
-                                    height: 1.1
-                                  ),
-                                )
-                              ),
-                            ),
-                            onTap: () {
-                              this.setState(() {
-                                this.showSkipModal = false;
-                              });
-                            },
-                          ),
-                        ),
-                      ]
-                    )
-                  )
-                ),
-              )
-            )
-          ) : Container(),
           this.showingInterstitialAd ? Container(
             color: Colors.black,
           ) : Container()
@@ -342,16 +228,21 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
   void onWordFound() async {
     await this.widget.gameStateService.setWordCompleted(this.word);
-    this.skip();
+    this.skip(
+      wordFound: true
+    );
     this.loadNumberCompleted();
   }
 
-  void skip() {
+  void skip({wordFound = false}) async {
     this.setState(() {
-      this.showSkipModal = false;
       this.skipAllowed = false;
       this.showingInterstitialAd = false;
       this.gameFragment = null;
     });
+
+    if (!wordFound) {
+      await this.widget.gameStateService.setWordSkipped(this.word);
+    }
   }
 }
