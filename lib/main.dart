@@ -75,7 +75,9 @@ void main() async {
   await migrateIfNeeded(oldGameStateService, gameStateService, database);
 
   assert(await () async {
-    await analytics.android.setAnalyticsCollectionEnabled(false);
+    if (Platform.isAndroid) {
+      await analytics.android.setAnalyticsCollectionEnabled(false);
+    }
     return true;
   }(), true);
 
