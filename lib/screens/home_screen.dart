@@ -78,6 +78,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   )
                 ),
                 Padding(
+                  padding: EdgeInsets.only(top: 24.0),
+                  child: GestureDetector(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 4.0
+                        ),
+                        borderRadius: BorderRadius.circular(8.0)
+                      ),
+                      padding: EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 8.0),
+                      child: Text(
+                        "60s speed round!",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Subscribe',
+                          fontSize: 32.0
+                        ),
+                      )
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/speed_round');
+                    },
+                  )
+                ),
+                Padding(
                   padding: EdgeInsets.only(top: 48.0),
                   child: GestureDetector(
                     child: Container(

@@ -166,6 +166,12 @@ class MyApp extends StatelessWidget {
           gameStateService: this.gameStateService,
           wordService: this.wordService
         ),
+        '/speed_round': (context) => GameScreen(
+          analyticsService: this.analyticsService,
+          appFlowService: this.appFlowService,
+          gameStateService: this.gameStateService,
+          wordService: this.wordService
+        ),
         '/about': (context) => AboutScreen()
       },
     );
