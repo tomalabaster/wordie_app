@@ -17,6 +17,7 @@ import 'package:wordie_app/preferences/database_query_strings.dart';
 import 'package:wordie_app/screens/about_screen.dart';
 import 'package:wordie_app/screens/game_screen.dart';
 import 'package:wordie_app/screens/home_screen.dart';
+import 'package:wordie_app/services/analytics_service.dart';
 import 'package:wordie_app/services/app_flow_service.dart';
 import 'package:wordie_app/services/game_state_service.dart';
 import 'package:wordie_app/services/word_service.dart';
@@ -91,6 +92,10 @@ void main() async {
       appFlowService: appFlowService,
       gameStateService: gameStateService,
       wordService: wordService,
+      analyticsService: MultiAnalyticsProviderService([
+        FirebaseAnalyticsService(analytics),
+        AppCenterAnalyticsService()
+      ]),
     )
   );
 }
@@ -114,13 +119,15 @@ class MyApp extends StatelessWidget {
   final IAppFlowService appFlowService;
   final IGameStateService gameStateService;
   final IWordService wordService;
+  final IAnalyticsService analyticsService;
 
   const MyApp({
     Key key,
     this.analytics,
     this.appFlowService,
     this.gameStateService,
-    this.wordService
+    this.wordService,
+    this.analyticsService
   }) : super(key: key);
 
   @override
@@ -135,7 +142,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => HomeScreen(analytics: this.analytics),
         '/game': (context) => GameScreen(
-          analytics: this.analytics,
+          analyticsService: this.analyticsService,
           appFlowService: this.appFlowService,
           gameStateService: this.gameStateService,
           wordService: this.wordService

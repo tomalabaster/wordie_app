@@ -2,10 +2,7 @@ import 'dart:async';
 
 import 'package:appcenter_analytics/appcenter_analytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:wordie_app/main.dart';
 import 'package:wordie_app/preferences/styles.dart';
 
 class HomeScreen extends StatefulWidget {
