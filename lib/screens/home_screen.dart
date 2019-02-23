@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:appcenter_analytics/appcenter_analytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
+import 'package:wordie_app/features/border_button.dart';
 import 'package:wordie_app/preferences/styles.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -53,25 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Padding(
                   padding: EdgeInsets.only(top: 96.0),
-                  child: GestureDetector(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 4.0
-                        ),
-                        borderRadius: BorderRadius.circular(8.0)
-                      ),
-                      padding: EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 8.0),
-                      child: Text(
-                        "Play!",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Subscribe',
-                          fontSize: 32.0
-                        ),
-                      )
-                    ),
+                  child: BorderButton(
+                    text: "Play!",
                     onTap: () {
                       Navigator.of(context).pushNamed('/game');
                     },
@@ -79,25 +63,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Padding(
                   padding: EdgeInsets.only(top: 24.0),
-                  child: GestureDetector(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 4.0
-                        ),
-                        borderRadius: BorderRadius.circular(8.0)
-                      ),
-                      padding: EdgeInsets.fromLTRB(24.0, 10.0, 24.0, 8.0),
-                      child: Text(
-                        "60s speed round!",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Subscribe',
-                          fontSize: 32.0
-                        ),
-                      )
-                    ),
+                  child: BorderButton(
+                    text: "60s speed round!",
                     onTap: () {
                       Navigator.of(context).pushNamed('/speed_round');
                     },
