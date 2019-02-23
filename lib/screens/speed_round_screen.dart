@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_admob/firebase_admob.dart';
@@ -9,9 +10,9 @@ import 'package:wordie_app/services/app_flow_service.dart';
 import 'package:wordie_app/services/game_state_service.dart';
 import 'package:wordie_app/services/word_service.dart';
 
-class GameScreen extends StatefulWidget {
+class SpeedRoundScreen extends StatefulWidget {
 
-  const GameScreen({
+  const SpeedRoundScreen({
     Key key,
     this.analyticsService,
     this.appFlowService,
@@ -25,10 +26,10 @@ class GameScreen extends StatefulWidget {
   final IAnalyticsService analyticsService;
 
   @override
-  _GameScreenState createState() => _GameScreenState();
+  _SpeedRoundScreenState createState() => _SpeedRoundScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateMixin {
+class _SpeedRoundScreenState extends State<SpeedRoundScreen> with SingleTickerProviderStateMixin {
 
   BannerAd _bannerAd;
   InterstitialAd _interstitialAd;
@@ -41,6 +42,13 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   bool failedToLoadInterstitial = false;
 
   int _numberCompleted = 0;
+
+
+  DateTime _timeStarted = DateTime.now();
+  double _timeRemaining = 60.0;
+  Timer _timeRemainingTimer;
+  bool _finished = false;
+  AnimationController _flashingController;
 
   @override
   void initState() {
@@ -81,12 +89,30 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
 
     this.setupInterstitialAd();
 
-    this.loadNumberCompleted();
+    this._timeRemainingTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
+      this.setState(() {
+        this._timeRemaining = 60.0 - DateTime.now().difference(this._timeStarted).inMilliseconds / 1000;
+        if (this._timeRemaining <= 0.0) {
+          this._timeRemaining = 0.0;
+          this._finished = true;
+          this._timeRemainingTimer.cancel();
+        }
+      });
+    });
+
+    this._flashingController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),
+    )..addListener(() {
+      this.setState((){});
+    })..repeat();
   }
 
   @override
   void dispose() {
     _bannerAd?.dispose();
+    this._timeRemainingTimer.cancel();
+    this._flashingController.dispose();
     super.dispose();
   }
 
@@ -121,8 +147,16 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
               backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
               elevation: 0.0,
               title: Center(
-                child: Text(
-                  this._numberCompleted == 0 ? "Wordie" : "${this._numberCompleted}",
+                child: this._finished ? Text(
+                  this._numberCompleted.toString(),
+                  style: TextStyle(
+                    fontFamily: 'Subscribe',
+                    fontSize: 40.0,
+                    color: this._flashingController.value < 0.5 ? Colors.red : Colors.white
+                  ),
+                )
+                :  Text(
+                  this._timeRemaining.toStringAsFixed(1),
                   style: TextStyle(
                     fontFamily: 'Subscribe',
                     fontSize: 40.0
@@ -191,15 +225,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       )
     );
   }
-
-  void loadNumberCompleted() async {
-    var numberCompleted = await this.widget.gameStateService.getWordsCompletedCount();
-
-    this.setState(() {
-      this._numberCompleted = numberCompleted;
-    });
-  }
-
+  
   void setupInterstitialAd() {
     var interstitialAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/3516443492" : "";
 
@@ -231,7 +257,8 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
     this.skip(
       wordFound: true
     );
-    this.loadNumberCompleted();
+    
+    this._numberCompleted += 1;
   }
 
   void skip({wordFound = false}) async {

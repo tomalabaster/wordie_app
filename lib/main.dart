@@ -17,6 +17,7 @@ import 'package:wordie_app/preferences/database_query_strings.dart';
 import 'package:wordie_app/screens/about_screen.dart';
 import 'package:wordie_app/screens/game_screen.dart';
 import 'package:wordie_app/screens/home_screen.dart';
+import 'package:wordie_app/screens/speed_round_screen.dart';
 import 'package:wordie_app/services/analytics_service.dart';
 import 'package:wordie_app/services/app_flow_service.dart';
 import 'package:wordie_app/services/game_state_service.dart';
@@ -166,7 +167,7 @@ class MyApp extends StatelessWidget {
           gameStateService: this.gameStateService,
           wordService: this.wordService
         ),
-        '/speed_round': (context) => GameScreen(
+        '/speed_round': (context) => SpeedRoundScreen(
           analyticsService: this.analyticsService,
           appFlowService: this.appFlowService,
           gameStateService: this.gameStateService,
