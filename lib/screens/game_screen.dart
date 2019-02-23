@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:appcenter_analytics/appcenter_analytics.dart';
 import 'package:firebase_admob/firebase_admob.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
@@ -240,9 +241,24 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       this.showingInterstitialAd = false;
       this.gameFragment = null;
     });
+    
+    var analyticsEvent = "";
+    var analyticsData = {
+      "word": this.word.word,
+      "description": this.word.description
+    };
 
-    if (!wordFound) {
+    if (wordFound) {
+      analyticsEvent = "word_found";
+    } else {
+      analyticsEvent = "word_skipped";
       await this.widget.gameStateService.setWordSkipped(this.word);
     }
+    
+    await this.widget.analytics.logEvent(
+      name: analyticsEvent,
+      parameters: analyticsData
+    );
+    await AppCenterAnalytics.trackEvent(analyticsEvent, analyticsData);
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:appcenter_analytics/appcenter_analytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> asyncInitState() async {
     await this.widget.analytics.logAppOpen();
+    await AppCenterAnalytics.trackEvent("app_open");
   }
 
   @override
