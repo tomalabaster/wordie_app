@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:firebase_admob/firebase_admob.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/screens/fragments/game_fragment.dart';
+import 'package:wordie_app/services/analytics_service.dart';
 import 'package:wordie_app/services/app_flow_service.dart';
 import 'package:wordie_app/services/game_state_service.dart';
 import 'package:wordie_app/services/word_service.dart';
@@ -13,16 +13,16 @@ class GameScreen extends StatefulWidget {
 
   const GameScreen({
     Key key,
-    this.analytics,
+    this.analyticsService,
     this.appFlowService,
     this.gameStateService,
     this.wordService
   }) : super(key: key);
 
-  final FirebaseAnalytics analytics;
   final IAppFlowService appFlowService;
   final IGameStateService gameStateService;
   final IWordService wordService;
+  final IAnalyticsService analyticsService;
 
   @override
   _GameScreenState createState() => _GameScreenState();
@@ -46,7 +46,7 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
 
-    this.widget.analytics.logAppOpen();
+    this.widget.analyticsService.trackEvent("app_open", data: null);
 
     this._targetingInfo = MobileAdTargetingInfo(
       nonPersonalizedAds: true,
@@ -240,9 +240,23 @@ class _GameScreenState extends State<GameScreen> with SingleTickerProviderStateM
       this.showingInterstitialAd = false;
       this.gameFragment = null;
     });
+    
+    var analyticsEvent = "";
+    var analyticsData = {
+      "word": this.word.word,
+      "description": this.word.description
+    };
 
-    if (!wordFound) {
+    if (wordFound) {
+      analyticsEvent = "word_found";
+    } else {
+      analyticsEvent = "word_skipped";
       await this.widget.gameStateService.setWordSkipped(this.word);
     }
+    
+    await this.widget.analyticsService.trackEvent(
+      analyticsEvent,
+      data: analyticsData
+    );
   }
 }

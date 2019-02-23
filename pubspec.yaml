@@ -22,6 +22,9 @@ dependencies:
   url_launcher: ^5.0.1
   cloud_firestore: 0.9.0+1
   firebase_auth: ^0.8.1+1
+  appcenter: ^0.2.1
+  appcenter_analytics: ^0.2.1
+  appcenter_crashes: ^0.2.1
   flutter:
     sdk: flutter
 
