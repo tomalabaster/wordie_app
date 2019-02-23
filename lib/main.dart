@@ -24,38 +24,11 @@ import 'package:wordie_app/services/word_service.dart';
 
 void main() async {
 
-  var databasesPath = await getDatabasesPath();
-  var path = join(databasesPath, 'intellihome.db');
-  var database = await openDatabase(
-      path,
-      version: 2,
-      onCreate: (Database db, int version) async {
-        await db.execute(DatabaseQueryStrings.createUsersTable);
-        await db.execute(DatabaseQueryStrings.seedUsersTable);
-        await db.execute(DatabaseQueryStrings.createWordsCompletedTable);
-    });
+  await setupAppCenter();
+  await setupAdMob();
+  await setupFirestore();
 
-  var appSecret = Platform.isIOS ? "50cec087-cf57-45cf-9710-efd77455e0e0" : Platform.isAndroid ? "df941685-d68f-4856-9fe5-40f1025fb3f9" : "";
-
-  await AppCenter.start(appSecret, [AppCenterAnalytics.id, AppCenterCrashes.id]);
-
-  assert(await () async {
-    await AppCenterAnalytics.setEnabled(false);
-    return true;
-  }(), true);
-
-  var appId = Platform.isIOS ? "ca-app-pub-8187198937216043~3354678461" : Platform.isAndroid ? "ca-app-pub-8187198937216043~2308942688" : "";
-
-  assert(() {
-    appId = FirebaseAdMob.testAppId;
-    return true;
-  }());
-
-  FirebaseAdMob.instance.initialize(appId: appId);
-
-  await Firestore.instance.settings(
-    timestampsInSnapshotsEnabled: true
-  );
+  var database = await setupDatabase();
   
   var user = await FirebaseAuth.instance.signInAnonymously();
   print(user.uid);
@@ -67,24 +40,13 @@ void main() async {
     userStore.setData({});
   }
 
-  var analytics = FirebaseAnalytics();
+  var analytics = await setupFirebaseAnalytics(user.uid);
   var appFlowService = FirebaseAppFlowService(userStore);
   var gameStateService = FirebaseGameStateService(userStore);
   var wordService = FirebaseWordService(wordsCollection);
-
   var oldGameStateService = GameStateService(database);
 
   await migrateIfNeeded(oldGameStateService, gameStateService, database);
-
-  assert(await () async {
-    if (Platform.isAndroid) {
-      await analytics.android.setAnalyticsCollectionEnabled(false);
-    }
-    return true;
-  }(), true);
-
-  await analytics.logLogin();
-  await analytics.setUserId(user.uid);
 
   runApp(
     MyApp(
@@ -98,6 +60,63 @@ void main() async {
       ]),
     )
   );
+}
+
+Future<void> setupAppCenter() async {
+  var appSecret = Platform.isIOS ? "50cec087-cf57-45cf-9710-efd77455e0e0" : Platform.isAndroid ? "df941685-d68f-4856-9fe5-40f1025fb3f9" : "";
+
+  await AppCenter.start(appSecret, [AppCenterAnalytics.id, AppCenterCrashes.id]);
+
+  assert(await () async {
+    await AppCenterAnalytics.setEnabled(false);
+    return true;
+  }(), true);
+}
+
+Future<void> setupAdMob() async {
+  var appId = Platform.isIOS ? "ca-app-pub-8187198937216043~3354678461" : Platform.isAndroid ? "ca-app-pub-8187198937216043~2308942688" : "";
+
+  assert(() {
+    appId = FirebaseAdMob.testAppId;
+    return true;
+  }());
+
+  FirebaseAdMob.instance.initialize(appId: appId);
+}
+
+Future<void> setupFirestore() async {
+  await Firestore.instance.settings(
+    timestampsInSnapshotsEnabled: true
+  );
+}
+
+Future<FirebaseAnalytics> setupFirebaseAnalytics(String userId) async {
+  var analytics = FirebaseAnalytics();
+
+  assert(await () async {
+    if (Platform.isAndroid) {
+      await analytics.android.setAnalyticsCollectionEnabled(false);
+    }
+    return true;
+  }(), true);
+
+  await analytics.logLogin();
+  await analytics.setUserId(userId);
+
+  return analytics;
+}
+
+Future<Database> setupDatabase() async {
+  var databasesPath = await getDatabasesPath();
+  var path = join(databasesPath, 'intellihome.db');
+  return await openDatabase(
+      path,
+      version: 2,
+      onCreate: (Database db, int version) async {
+        await db.execute(DatabaseQueryStrings.createUsersTable);
+        await db.execute(DatabaseQueryStrings.seedUsersTable);
+        await db.execute(DatabaseQueryStrings.createWordsCompletedTable);
+    });
 }
 
 Future<void> migrateIfNeeded(IGameStateService oldService, IGameStateService newService, Database database) async {
