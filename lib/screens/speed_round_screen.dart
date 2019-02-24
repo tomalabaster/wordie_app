@@ -45,17 +45,7 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
   void initState() {
     super.initState();
 
-    this._timeRemainingTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
-      this.setState(() {
-        this._timeRemaining = 60.0 - DateTime.now().difference(this._timeStarted).inMilliseconds / 1000;
-        if (this._timeRemaining <= 0.0) {
-          this._timeRemaining = 0.0;
-          this._finished = true;
-          this._timeRemainingTimer.cancel();
-          this._flashingController.repeat();
-        }
-      });
-    });
+    this.setupTimer();
 
     this._flashingController = AnimationController(
       vsync: this,
@@ -157,9 +147,137 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
           ),
           this.showingInterstitialAd ? Container(
             color: Colors.black,
+          ) : Container(),
+          this._finished ? Opacity(
+            opacity: 1.0,
+            child: Material(
+              color: Colors.black.withAlpha(196),
+              child: Center(
+                child: Padding(
+                  padding: EdgeInsets.only(left: 32.0, right: 32.0),
+                  child: Container(
+                    height: 360.0,
+                    child: Stack(
+                      children: [
+                        Align(
+                          alignment: Alignment.center,
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
+                            child: Container(
+                              height: 360.0,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(
+                                  width: 4.0
+                                ),
+                                borderRadius: BorderRadius.circular(8.0)
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "You've used your free skip for today.\n\nView a real quick ad?",
+                                    style: TextStyle(
+                                      fontFamily: 'Subscribe',
+                                      fontSize: 24.0
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 32.0),
+                                    child: GestureDetector(
+                                      child: Container(
+                                        width: 128.0,
+                                        height: 48.0,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8.0),
+                                          color: Color.fromRGBO(32, 162, 226, 1.0)
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            "Play again!",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: 'Subscribe',
+                                              fontSize: 28.0
+                                            )
+                                          )
+                                        )
+                                      ),
+                                      onTap: () {
+                                        this.setState(() {
+                                          this._timeStarted = DateTime.now();
+                                          this._timeRemaining = 60.0;
+                                          this._finished = false;
+                                          this._flashingController.reset();
+                                          this.showingInterstitialAd = false;
+                                          this.setupTimer();
+                                        });
+                                      },
+                                    )
+                                  ),
+                                ]
+                              ),
+                              padding: EdgeInsets.all(16.0),
+                            ),
+                          )
+                        ),
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: GestureDetector(
+                            child: Container(
+                              width: 32.0,
+                              height: 32.0,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  width: 4.0
+                                ),
+                                borderRadius: BorderRadius.circular(32.0),
+                                color: Colors.white
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "X",
+                                  style: TextStyle(
+                                    fontFamily: "Subscribe",
+                                    fontSize: 24.0,
+                                    height: 1.1
+                                  ),
+                                )
+                              ),
+                            ),
+                            onTap: () {
+                              this.setState(() {
+                                this._finished = false;
+                              });
+                            },
+                          ),
+                        ),
+                      ]
+                    )
+                  )
+                ),
+              )
+            )
           ) : Container()
         ]
       )
     );
+  }
+
+  void setupTimer() {
+    this._timeRemainingTimer = Timer.periodic(Duration(milliseconds: 100), (timer) {
+      this.setState(() {
+        this._timeRemaining = 60.0 - DateTime.now().difference(this._timeStarted).inMilliseconds / 1000;
+        if (this._timeRemaining <= 0.0) {
+          this._timeRemaining = 0.0;
+          this._finished = true;
+          this._timeRemainingTimer.cancel();
+          this._flashingController.repeat();
+          this.showingInterstitialAd = true;
+          this.interstitialAd.show();
+        }
+      });
+    });
   }
 }
