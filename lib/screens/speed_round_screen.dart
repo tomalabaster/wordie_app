@@ -141,19 +141,7 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
                           fontSize: 24.0
                         ),
                       ),
-                      onTap: () async {
-                        if (await this.widget.appFlowService.hasHadTodaysSkip()) {
-                          this.setState(() {
-                            this.showingInterstitialAd = true;
-                          });
-
-                          this.interstitialAd.show();
-                        } else {
-                          await this.widget.appFlowService.setHasHadTodaysSkip(true);
-
-                          this.skip();
-                        }
-                      },
+                      onTap: this.skipButtonPressed,
                     ),
                   )
                 )

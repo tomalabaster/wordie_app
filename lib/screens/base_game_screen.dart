@@ -136,6 +136,20 @@ abstract class BaseGameScreenState extends State<BaseGameScreen> with SingleTick
     this.loadNumberCompleted();
   }
 
+  void skipButtonPressed() async {
+    if (await this.widget.appFlowService.hasHadTodaysSkip()) {
+      this.setState(() {
+        this.showingInterstitialAd = true;
+      });
+
+      this.interstitialAd.show();
+    } else {
+      await this.widget.appFlowService.setHasHadTodaysSkip(true);
+
+      this.skip();
+    }
+  }
+
   void skip({wordFound = false}) async {
     this.setState(() {
       this.skipAllowed = false;
