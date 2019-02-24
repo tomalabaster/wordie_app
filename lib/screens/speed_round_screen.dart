@@ -96,6 +96,7 @@ class _SpeedRoundScreenState extends State<SpeedRoundScreen> with SingleTickerPr
           this._timeRemaining = 0.0;
           this._finished = true;
           this._timeRemainingTimer.cancel();
+          this._flashingController.repeat();
         }
       });
     });
@@ -105,7 +106,7 @@ class _SpeedRoundScreenState extends State<SpeedRoundScreen> with SingleTickerPr
       duration: Duration(milliseconds: 500),
     )..addListener(() {
       this.setState((){});
-    })..repeat();
+    });
   }
 
   @override
@@ -147,19 +148,12 @@ class _SpeedRoundScreenState extends State<SpeedRoundScreen> with SingleTickerPr
               backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
               elevation: 0.0,
               title: Center(
-                child: this._finished ? Text(
-                  this._numberCompleted.toString(),
-                  style: TextStyle(
-                    fontFamily: 'Subscribe',
-                    fontSize: 40.0,
-                    color: this._flashingController.value < 0.5 ? Colors.red : Colors.white
-                  ),
-                )
-                :  Text(
+                child: Text(
                   this._timeRemaining.toStringAsFixed(1),
                   style: TextStyle(
                     fontFamily: 'Subscribe',
-                    fontSize: 40.0
+                    fontSize: 40.0,
+                    color: this._flashingController.value < 0.5 ? Colors.white : Colors.red
                   ),
                 )
               ),
