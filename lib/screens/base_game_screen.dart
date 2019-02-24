@@ -42,13 +42,26 @@ abstract class BaseGameScreenState extends State<BaseGameScreen> with SingleTick
   void initState() {
     super.initState();
 
-    this.widget.analyticsService.trackEvent("app_open", data: null);
+    this.setupTargetingInfo();
+    this.setupBannerAd();
+    this.setupInterstitialAd();
+  }
 
+  @override
+  void dispose() {
+    this.bannerAd.dispose();
+    this.interstitialAd.dispose();
+    super.dispose();
+  }
+
+  void setupTargetingInfo() {
     this.targetingInfo = MobileAdTargetingInfo(
       nonPersonalizedAds: true,
-      testDevices: <String>["b33e7086ea0bca1ef39f2b32801854b7"], // Android emulators are considered test devices
+      testDevices: <String>["b33e7086ea0bca1ef39f2b32801854b7"],
     );
+  }
 
+  void setupBannerAd() {
     var bannerAdUnitId = Platform.isIOS ? "" : Platform.isAndroid ? "ca-app-pub-8187198937216043/7768566190" : "";
 
     assert(() {
@@ -60,35 +73,23 @@ abstract class BaseGameScreenState extends State<BaseGameScreen> with SingleTick
       adUnitId: bannerAdUnitId,
       size: AdSize.smartBanner,
       targetingInfo: this.targetingInfo,
-      listener: (MobileAdEvent event) {
-        print("BannerAd event is $event");
-        
-        if (event == MobileAdEvent.loaded) {
-          this.setState(() {
-            this.bottomPadding = 50.0;
-          });
-        } else if (event == MobileAdEvent.failedToLoad || event == MobileAdEvent.closed) {
-          this.setState(() {
-            this.bottomPadding = 0.0;
-          });
-        }
-      },
+      listener: this.bannerAdListener,
     )..load()..show();
-    
-    this.setupInterstitialAd();
   }
 
-  @override
-  void dispose() {
-    bannerAd?.dispose();
-    super.dispose();
+  void bannerAdListener(MobileAdEvent event) {
+    print("BannerAd event is $event");
+      
+    if (event == MobileAdEvent.loaded) {
+      this.setBottomPaddingForBannerAdState(showing: true);
+    } else if (event == MobileAdEvent.failedToLoad || event == MobileAdEvent.closed) {
+      this.setBottomPaddingForBannerAdState(showing: false);
+    }
   }
 
-  void loadNumberCompleted() async {
-    var numberCompleted = await this.widget.gameStateService.getWordsCompletedCount();
-
+  void setBottomPaddingForBannerAdState({bool showing = false}) {
     this.setState(() {
-      this.numberCompleted = numberCompleted;
+      this.bottomPadding = showing ? 50.0 : 0.0;
     });
   }
 
@@ -103,26 +104,35 @@ abstract class BaseGameScreenState extends State<BaseGameScreen> with SingleTick
     this.interstitialAd = InterstitialAd(
       adUnitId: interstitialAdUnitId,
       targetingInfo: this.targetingInfo,
-      listener: (event) {
-        print("Interstitial ad event: $event");
-
-        if (event == MobileAdEvent.closed) {
-          this.skip();
-          this.setupInterstitialAd();
-        } else if (event == MobileAdEvent.loaded) {
-          this.failedToLoadInterstitial = false;
-        } else if (event == MobileAdEvent.failedToLoad) {
-          this.failedToLoadInterstitial = true;
-        }
-      }
+      listener: this.interstitialAdListener
     )..load();
+  }
+
+  void interstitialAdListener(MobileAdEvent event) {
+    print("Interstitial ad event: $event");
+
+    if (event == MobileAdEvent.closed) {
+      this.skip();
+      this.setupInterstitialAd();
+    } else if (event == MobileAdEvent.loaded) {
+      this.failedToLoadInterstitial = false;
+    } else if (event == MobileAdEvent.failedToLoad) {
+      this.failedToLoadInterstitial = true;
+    }
+  }
+
+  void loadNumberCompleted() async {
+    var numberCompleted = await this.widget.gameStateService.getWordsCompletedCount();
+
+    this.setState(() {
+      this.numberCompleted = numberCompleted;
+    });
   }
 
   void onWordFound() async {
     await this.widget.gameStateService.setWordCompleted(this.word);
-    this.skip(
-      wordFound: true
-    );
+    
+    this.skip(wordFound: true);
     this.loadNumberCompleted();
   }
 
@@ -133,7 +143,7 @@ abstract class BaseGameScreenState extends State<BaseGameScreen> with SingleTick
       this.gameFragment = null;
     });
     
-    var analyticsEvent = "";
+    var analyticsEvent;
     var analyticsData = {
       "word": this.word.word,
       "description": this.word.description
