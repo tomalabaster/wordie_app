@@ -183,10 +183,18 @@ class FirebaseWordService extends IWordService {
 
               var senses = entry["senses"];
               
+              if (senses == null) {
+                return null;
+              }
+
               if (senses.length > 0) {
                 var sense = senses[0];
 
                 var definitions = sense["definitions"] as List<dynamic>;
+
+                if (definitions == null) {
+                  return null;
+                }
 
                 if (definitions.length > 0) {
                   return definitions[0];

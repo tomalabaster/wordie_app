@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:wordie_app/features/wordie_dialog.dart';
 import 'package:wordie_app/screens/base_game_screen.dart';
 import 'package:wordie_app/screens/fragments/game_fragment.dart';
 import 'package:wordie_app/services/analytics_service.dart';
@@ -35,15 +36,21 @@ class SpeedRoundScreen extends BaseGameScreen {
 
 class _SpeedRoundScreenState extends BaseGameScreenState {
 
-  DateTime _timeStarted = DateTime.now();
-  double _timeRemaining = 60.0;
+  DateTime _timeStarted;
+  double _timeRemaining;
   Timer _timeRemainingTimer;
-  bool _finished = false;
+  bool _finished;
   AnimationController _flashingController;
+  int _speedRoundNumberCompleted;
 
   @override
   void initState() {
     super.initState();
+
+    this._timeStarted = DateTime.now();
+    this._timeRemaining = 60.0;
+    this._finished = false;
+    this._speedRoundNumberCompleted = 0;
 
     this.setupTimer();
 
@@ -125,13 +132,13 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
                     padding: EdgeInsets.only(right: 16.0),
                     child: GestureDetector(
                       child: Text(
-                        "Skip",
+                        this._timeRemainingTimer.isActive ? "Skip" : "Play",
                         style: TextStyle(
                           fontFamily: 'Subscribe',
                           fontSize: 24.0
                         ),
                       ),
-                      onTap: this.skipButtonPressed,
+                      onTap: this._timeRemainingTimer.isActive ? this.skipButtonPressed : this.play,
                     ),
                   )
                 )
@@ -148,121 +155,26 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
           this.showingInterstitialAd ? Container(
             color: Colors.black,
           ) : Container(),
-          this._finished ? Opacity(
-            opacity: 1.0,
-            child: Material(
-              color: Colors.black.withAlpha(196),
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 32.0, right: 32.0),
-                  child: Container(
-                    height: 360.0,
-                    child: Stack(
-                      children: [
-                        Align(
-                          alignment: Alignment.center,
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0),
-                            child: Container(
-                              height: 360.0,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  width: 4.0
-                                ),
-                                borderRadius: BorderRadius.circular(8.0)
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "You've used your free skip for today.\n\nView a real quick ad?",
-                                    style: TextStyle(
-                                      fontFamily: 'Subscribe',
-                                      fontSize: 24.0
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 32.0),
-                                    child: GestureDetector(
-                                      child: Container(
-                                        width: 128.0,
-                                        height: 48.0,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(8.0),
-                                          color: Color.fromRGBO(32, 162, 226, 1.0)
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            "Play again!",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontFamily: 'Subscribe',
-                                              fontSize: 28.0
-                                            )
-                                          )
-                                        )
-                                      ),
-                                      onTap: () {
-                                        this.setState(() {
-                                          this._timeStarted = DateTime.now();
-                                          this._timeRemaining = 60.0;
-                                          this._finished = false;
-                                          this._flashingController.reset();
-                                          this.showingInterstitialAd = false;
-                                          this.setupTimer();
-                                        });
-                                      },
-                                    )
-                                  ),
-                                ]
-                              ),
-                              padding: EdgeInsets.all(16.0),
-                            ),
-                          )
-                        ),
-                        Align(
-                          alignment: Alignment.topRight,
-                          child: GestureDetector(
-                            child: Container(
-                              width: 32.0,
-                              height: 32.0,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  width: 4.0
-                                ),
-                                borderRadius: BorderRadius.circular(32.0),
-                                color: Colors.white
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "X",
-                                  style: TextStyle(
-                                    fontFamily: "Subscribe",
-                                    fontSize: 24.0,
-                                    height: 1.1
-                                  ),
-                                )
-                              ),
-                            ),
-                            onTap: () {
-                              this.setState(() {
-                                this._finished = false;
-                              });
-                            },
-                          ),
-                        ),
-                      ]
-                    )
-                  )
-                ),
-              )
-            )
+          this._finished ? WordieDialog(
+            text: "Nice one! You scored...\n\n${this._speedRoundNumberCompleted}",
+            buttonText: "Play again!",
+            onButtonTapped: this.play,
+            onCloseTapped: () {
+              this.setState(() {
+                this._finished = false;
+              });
+            },
           ) : Container()
         ]
       )
     );
+  }
+
+  @override
+  void onWordFound() {
+    super.onWordFound();
+    
+    this._speedRoundNumberCompleted += 1;
   }
 
   void setupTimer() {
@@ -278,6 +190,18 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
           this.interstitialAd.show();
         }
       });
+    });
+  }
+
+  void play() {
+    this.setState(() {
+      this._timeStarted = DateTime.now();
+      this._timeRemaining = 60.0;
+      this._finished = false;
+      this._flashingController.reset();
+      this.showingInterstitialAd = false;
+      this._speedRoundNumberCompleted = 0;
+      this.setupTimer();
     });
   }
 }
