@@ -16,6 +16,8 @@ flutter doctor
 
 echo "Installed flutter to `pwd`/flutter"
 
+flutter test
+
 if [ "$APPCENTER_BRANCH" == "master" ]
 then
     flutter build apk --release
