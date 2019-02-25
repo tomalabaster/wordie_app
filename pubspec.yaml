@@ -33,6 +33,7 @@ dependencies:
   cupertino_icons: ^0.1.2
 
 dev_dependencies:
+  mockito: ^4.0.0
   flutter_test:
     sdk: flutter
 
