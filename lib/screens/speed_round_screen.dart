@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:wordie_app/features/wordie_dialog.dart';
+import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/screens/base_game_screen.dart';
 import 'package:wordie_app/screens/fragments/game_fragment.dart';
 import 'package:wordie_app/services/analytics_service.dart';
@@ -42,23 +43,38 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
   bool _finished;
   AnimationController _flashingController;
   int _speedRoundNumberCompleted;
+  List<Word> _words = [];
+  int _currentWordIndex;
 
   @override
   void initState() {
     super.initState();
 
-    this._timeStarted = DateTime.now();
-    this._timeRemaining = 60.0;
-    this._finished = false;
-    this._speedRoundNumberCompleted = 0;
+    this.asyncInitState();
+  }
 
-    this.setupTimer();
+  Future<void> asyncInitState() async {
+    var words = await this.widget.wordService.get60SecondWords();
 
-    this._flashingController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 500),
-    )..addListener(() {
-      this.setState((){});
+    this.setState(() {
+      this._words = words;
+      this._currentWordIndex = 0;
+      this.word = this._words[this._currentWordIndex];
+      this._timeStarted = DateTime.now();
+      this._timeRemaining = 60.0;
+      this._finished = false;
+      this._speedRoundNumberCompleted = 0;
+
+      this.setupTimer();
+
+      if (this._flashingController == null) {
+        this._flashingController = AnimationController(
+          vsync: this,
+          duration: Duration(milliseconds: 500),
+        )..addListener(() {
+          this.setState((){});
+        });
+      }
     });
   }
 
@@ -73,19 +89,13 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
   Widget build(BuildContext context) {
     if (this.gameFragment == null) {
       this.gameFragment = FutureBuilder(
-        future: this.widget.wordService.getNewWord(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-            this.word = snapshot.data;
-            
-            return GameFragment(
-              word: snapshot.data,
-              onWordFound: () => this.onWordFound(),
-            );
-          }
-
-          return CircularProgressIndicator(
+          return this._words.length == 0 ? CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ) : GameFragment(
+            word: this.word,
+            onWordFound: () => this.onWordFound(),
+            delayWhenFound: false,
           );
         },
       );
@@ -93,7 +103,14 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
 
     return WillPopScope(
       onWillPop: () {},
-      child: Stack(
+      child: this._timeStarted == null ? Scaffold(
+        backgroundColor: Color.fromRGBO(32, 162, 226, 1.0),
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        ),
+      ) : Stack(
         children: [
           Scaffold(
             appBar: AppBar(
@@ -174,7 +191,11 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
   void onWordFound() {
     super.onWordFound();
     
-    this._speedRoundNumberCompleted += 1;
+    this.setState(() {
+      this._speedRoundNumberCompleted += 1;
+      this._currentWordIndex += 1;
+      this.word = this._words[this._currentWordIndex];
+    });
   }
 
   void setupTimer() {
@@ -195,13 +216,9 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
 
   void play() {
     this.setState(() {
-      this._timeStarted = DateTime.now();
-      this._timeRemaining = 60.0;
       this._finished = false;
-      this._flashingController.reset();
-      this.showingInterstitialAd = false;
-      this._speedRoundNumberCompleted = 0;
-      this.setupTimer();
+      this._timeStarted = null; 
     });
+    this.asyncInitState();
   }
 }
