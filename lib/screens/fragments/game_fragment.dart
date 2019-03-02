@@ -19,10 +19,10 @@ class GameFragment extends StatelessWidget {
     this.delayWhenFound = true
   }) : super(key: key);
 
-  static Future time(int time) async {
+  static Future time(int time, {int milliseconds = 0}) async {
     Completer c = new Completer();
 
-    new Timer(new Duration(seconds: time), () {
+    new Timer(new Duration(seconds: time, milliseconds: milliseconds), () {
       c.complete('done with time out');
     });
 

@@ -89,13 +89,21 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
   Widget build(BuildContext context) {
     if (this.gameFragment == null) {
       this.gameFragment = FutureBuilder(
+        future: Future(() async {
+          await GameFragment.time(0, milliseconds: 250);
+          return true;
+        }),
         builder: (context, snapshot) {
-          return this._words.length == 0 ? CircularProgressIndicator(
+          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {            
+            return GameFragment(
+              word: this.word,
+              onWordFound: () => this.onWordFound(),
+              delayWhenFound: false,
+            );
+          }
+
+          return CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ) : GameFragment(
-            word: this.word,
-            onWordFound: () => this.onWordFound(),
-            delayWhenFound: false,
           );
         },
       );

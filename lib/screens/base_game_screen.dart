@@ -48,10 +48,20 @@ abstract class BaseGameScreenState extends State<BaseGameScreen> with SingleTick
   }
 
   @override
-  void dispose() {
-    this.bannerAd.dispose();
-    this.interstitialAd.dispose();
+  void dispose() async {
     super.dispose();
+    
+    try {
+      await this.bannerAd?.dispose();
+    } on Exception catch (e) {
+      print(e.toString());
+    }
+
+    try {
+      await this.interstitialAd?.dispose();
+    } on Exception catch (e) {
+      print(e.toString());
+    }
   }
 
   void setupTargetingInfo() {
