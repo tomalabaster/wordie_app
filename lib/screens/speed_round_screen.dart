@@ -188,6 +188,8 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
               this.setState(() {
                 this._finished = false;
               });
+
+              Navigator.of(context).pop();
             },
           ) : Container()
         ]
@@ -214,9 +216,12 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
           this._timeRemaining = 0.0;
           this._finished = true;
           this._timeRemainingTimer.cancel();
-          this._flashingController.repeat();
           this.showingInterstitialAd = true;
           this.interstitialAd.show();
+        }
+
+        if (this._timeRemaining <= 10.0 && !this._flashingController.isAnimating) {
+          this._flashingController.repeat();
         }
       });
     });
@@ -226,6 +231,7 @@ class _SpeedRoundScreenState extends BaseGameScreenState {
     this.setState(() {
       this._finished = false;
       this._timeStarted = null; 
+      this._flashingController.reset();
     });
     this.asyncInitState();
   }
