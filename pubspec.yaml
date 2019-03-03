@@ -25,6 +25,7 @@ dependencies:
   appcenter: ^0.2.1
   appcenter_analytics: ^0.2.1
   appcenter_crashes: ^0.2.1
+  flutter_local_notifications: ^0.5.2
   flutter:
     sdk: flutter
 

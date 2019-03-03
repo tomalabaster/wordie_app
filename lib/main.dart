@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_admob/firebase_admob.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:appcenter/appcenter.dart';
@@ -28,6 +29,7 @@ void main() async {
   await setupAppCenter();
   await setupAdMob();
   await setupFirestore();
+  await setupDailyNotifications();
 
   var database = await setupDatabase();
   
@@ -105,6 +107,36 @@ Future<FirebaseAnalytics> setupFirebaseAnalytics(String userId) async {
   await analytics.setUserId(userId);
 
   return analytics;
+}
+
+Future<void> setupDailyNotifications() async {
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  var initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_ic_launcher');
+  var initializationSettingsIOS = IOSInitializationSettings(/*onDidReceiveLocalNotification: onDidRecieveLocationLocation*/);
+  var initializationSettings = InitializationSettings(
+    initializationSettingsAndroid,
+    initializationSettingsIOS);
+  flutterLocalNotificationsPlugin.initialize(
+    initializationSettings);
+
+  var time = Time(18, 0, 0);
+  var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+    'repeatDailyAtTime channel id',
+    'repeatDailyAtTime channel name',
+    'repeatDailyAtTime description');
+  var iOSPlatformChannelSpecifics = IOSNotificationDetails();
+  var platformChannelSpecifics = NotificationDetails(
+    androidPlatformChannelSpecifics,
+    iOSPlatformChannelSpecifics);
+
+  await flutterLocalNotificationsPlugin.cancel(0);
+  
+  await flutterLocalNotificationsPlugin.showDailyAtTime(
+    0,
+    'Daily 60 second challenge!',
+    'Make sure to complete your daily 60 second challenge!',
+    time,
+    platformChannelSpecifics);
 }
 
 Future<Database> setupDatabase() async {
