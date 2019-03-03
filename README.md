@@ -1,16 +1,6 @@
-# wordie_app
+Develop: [![Build status](https://build.appcenter.ms/v0.1/apps/1442f8e1-b01c-457c-8400-94ec3dd23532/branches/develop/badge)](https://appcenter.ms)
+Master: [![Build status](https://build.appcenter.ms/v0.1/apps/1442f8e1-b01c-457c-8400-94ec3dd23532/branches/master/badge)](https://appcenter.ms)
 
-A new Flutter project.
+# Wordie: Word search meets crossword!
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.io/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.io/docs/cookbook)
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.io/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+Wordie is the new and exciting brain exercising game!
