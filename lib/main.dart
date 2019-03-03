@@ -2,46 +2,36 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/observer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_admob/firebase_admob.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:appcenter/appcenter.dart';
+import 'package:appcenter_analytics/appcenter_analytics.dart';
+import 'package:appcenter_crashes/appcenter_crashes.dart';
 import 'package:wordie_app/models/word.dart';
 import 'package:wordie_app/preferences/database_query_strings.dart';
 import 'package:wordie_app/screens/about_screen.dart';
 import 'package:wordie_app/screens/game_screen.dart';
 import 'package:wordie_app/screens/home_screen.dart';
+import 'package:wordie_app/screens/speed_round_screen.dart';
+import 'package:wordie_app/services/analytics_service.dart';
 import 'package:wordie_app/services/app_flow_service.dart';
 import 'package:wordie_app/services/game_state_service.dart';
 import 'package:wordie_app/services/word_service.dart';
 
 void main() async {
 
-  var databasesPath = await getDatabasesPath();
-  var path = join(databasesPath, 'intellihome.db');
-  var database = await openDatabase(
-      path,
-      version: 2,
-      onCreate: (Database db, int version) async {
-        await db.execute(DatabaseQueryStrings.createUsersTable);
-        await db.execute(DatabaseQueryStrings.seedUsersTable);
-        await db.execute(DatabaseQueryStrings.createWordsCompletedTable);
-    });
+  await setupAppCenter();
+  await setupAdMob();
+  await setupFirestore();
+  await setupDailyNotifications();
 
-  var appId = Platform.isIOS ? "ca-app-pub-8187198937216043~3354678461" : Platform.isAndroid ? "ca-app-pub-8187198937216043~2308942688" : "";
-
-  assert(() {
-    appId = FirebaseAdMob.testAppId;
-    return true;
-  }());
-
-  FirebaseAdMob.instance.initialize(appId: appId);
-
-  await Firestore.instance.settings(
-    timestampsInSnapshotsEnabled: true
-  );
+  var database = await setupDatabase();
   
   var user = await FirebaseAuth.instance.signInAnonymously();
   print(user.uid);
@@ -53,11 +43,10 @@ void main() async {
     userStore.setData({});
   }
 
-  var analytics = FirebaseAnalytics();
+  var analytics = await setupFirebaseAnalytics(user.uid);
   var appFlowService = FirebaseAppFlowService(userStore);
   var gameStateService = FirebaseGameStateService(userStore);
   var wordService = FirebaseWordService(wordsCollection);
-
   var oldGameStateService = GameStateService(database);
 
   await migrateIfNeeded(oldGameStateService, gameStateService, database);
@@ -68,8 +57,99 @@ void main() async {
       appFlowService: appFlowService,
       gameStateService: gameStateService,
       wordService: wordService,
+      analyticsService: MultiAnalyticsProviderService([
+        FirebaseAnalyticsService(analytics),
+        AppCenterAnalyticsService()
+      ]),
     )
   );
+}
+
+Future<void> setupAppCenter() async {
+  var appSecret = Platform.isIOS ? "50cec087-cf57-45cf-9710-efd77455e0e0" : Platform.isAndroid ? "df941685-d68f-4856-9fe5-40f1025fb3f9" : "";
+
+  await AppCenter.start(appSecret, [AppCenterAnalytics.id, AppCenterCrashes.id]);
+
+  assert(await () async {
+    await AppCenterAnalytics.setEnabled(false);
+    return true;
+  }(), true);
+}
+
+Future<void> setupAdMob() async {
+  var appId = Platform.isIOS ? "ca-app-pub-8187198937216043~3354678461" : Platform.isAndroid ? "ca-app-pub-8187198937216043~2308942688" : "";
+
+  assert(() {
+    appId = FirebaseAdMob.testAppId;
+    return true;
+  }());
+
+  FirebaseAdMob.instance.initialize(appId: appId);
+}
+
+Future<void> setupFirestore() async {
+  await Firestore.instance.settings(
+    timestampsInSnapshotsEnabled: true
+  );
+}
+
+Future<FirebaseAnalytics> setupFirebaseAnalytics(String userId) async {
+  var analytics = FirebaseAnalytics();
+
+  assert(await () async {
+    if (Platform.isAndroid) {
+      await analytics.android.setAnalyticsCollectionEnabled(false);
+    }
+    return true;
+  }(), true);
+
+  await analytics.logLogin();
+  await analytics.setUserId(userId);
+
+  return analytics;
+}
+
+Future<void> setupDailyNotifications() async {
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  var initializationSettingsAndroid = AndroidInitializationSettings('ic_stat_ic_launcher');
+  var initializationSettingsIOS = IOSInitializationSettings(/*onDidReceiveLocalNotification: onDidRecieveLocationLocation*/);
+  var initializationSettings = InitializationSettings(
+    initializationSettingsAndroid,
+    initializationSettingsIOS);
+  flutterLocalNotificationsPlugin.initialize(
+    initializationSettings);
+
+  var time = Time(18, 0, 0);
+  var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+    'repeatDailyAtTime channel id',
+    'repeatDailyAtTime channel name',
+    'repeatDailyAtTime description');
+  var iOSPlatformChannelSpecifics = IOSNotificationDetails();
+  var platformChannelSpecifics = NotificationDetails(
+    androidPlatformChannelSpecifics,
+    iOSPlatformChannelSpecifics);
+
+  await flutterLocalNotificationsPlugin.cancel(0);
+  
+  await flutterLocalNotificationsPlugin.showDailyAtTime(
+    0,
+    'Daily 60 second challenge!',
+    'Make sure to complete your daily 60 second challenge!',
+    time,
+    platformChannelSpecifics);
+}
+
+Future<Database> setupDatabase() async {
+  var databasesPath = await getDatabasesPath();
+  var path = join(databasesPath, 'intellihome.db');
+  return await openDatabase(
+      path,
+      version: 2,
+      onCreate: (Database db, int version) async {
+        await db.execute(DatabaseQueryStrings.createUsersTable);
+        await db.execute(DatabaseQueryStrings.seedUsersTable);
+        await db.execute(DatabaseQueryStrings.createWordsCompletedTable);
+    });
 }
 
 Future<void> migrateIfNeeded(IGameStateService oldService, IGameStateService newService, Database database) async {
@@ -91,13 +171,15 @@ class MyApp extends StatelessWidget {
   final IAppFlowService appFlowService;
   final IGameStateService gameStateService;
   final IWordService wordService;
+  final IAnalyticsService analyticsService;
 
   const MyApp({
     Key key,
     this.analytics,
     this.appFlowService,
     this.gameStateService,
-    this.wordService
+    this.wordService,
+    this.analyticsService
   }) : super(key: key);
 
   @override
@@ -108,10 +190,17 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
+      navigatorObservers: [FirebaseAnalyticsObserver(analytics: this.analytics)],
       routes: {
-        '/': (context) => HomeScreen(),
+        '/': (context) => HomeScreen(analytics: this.analytics),
         '/game': (context) => GameScreen(
-          analytics: this.analytics,
+          analyticsService: this.analyticsService,
+          appFlowService: this.appFlowService,
+          gameStateService: this.gameStateService,
+          wordService: this.wordService
+        ),
+        '/speed_round': (context) => SpeedRoundScreen(
+          analyticsService: this.analyticsService,
           appFlowService: this.appFlowService,
           gameStateService: this.gameStateService,
           wordService: this.wordService

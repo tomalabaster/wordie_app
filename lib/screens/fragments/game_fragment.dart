@@ -10,17 +10,19 @@ class GameFragment extends StatelessWidget {
 
   final Word word;
   final Function onWordFound;
+  final bool delayWhenFound;
 
   const GameFragment({
     Key key,
     this.word,
-    this.onWordFound
+    this.onWordFound,
+    this.delayWhenFound = true
   }) : super(key: key);
 
-  static Future time(int time) async {
+  static Future time(int time, {int milliseconds = 0}) async {
     Completer c = new Completer();
 
-    new Timer(new Duration(seconds: time), () {
+    new Timer(new Duration(seconds: time, milliseconds: milliseconds), () {
       c.complete('done with time out');
     });
 
@@ -41,7 +43,9 @@ class GameFragment extends StatelessWidget {
                 word: this.word,
                 grid: this.buildGridForWord(context, this.word),
                 onWordFound: () async {
-                  await GameFragment.time(1);
+                  if (this.delayWhenFound) {
+                    await GameFragment.time(1);
+                  }
 
                   this.onWordFound();
                 }
